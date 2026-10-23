@@ -34,7 +34,7 @@
     #sidebar {
       width: 420px;
       height: 100%;
-      background: rgba(15, 23, 42, 0.95);
+      background: rgba(15, 23, 42, 0.96);
       backdrop-filter: blur(12px);
       padding: 20px;
       display: flex;
@@ -73,7 +73,6 @@
       border-radius: 6px;
       font-size: 0.82rem;
       outline: none;
-      transition: border-color 0.2s;
     }
 
     input[type="text"]:focus, select:focus {
@@ -117,7 +116,7 @@
       margin: 0 auto 8px auto;
     }
 
-    /* Mobile Responsiveness */
+    /* Mobile Drawer */
     @media (max-width: 768px) {
       body { flex-direction: column; }
 
@@ -211,11 +210,15 @@
       zoomControl: true
     });
 
-    // Google Earth Hybrid Satellite Base Layer
+    // 1. Google Earth Hybrid Satellite Base Layer
     const googleHybrid = L.tileLayer('https://mt1.google.com/vt/lyrs=y&x={x}&y={y}&z={z}', {
       maxZoom: 20,
       attribution: 'Map &copy; Google'
     }).addTo(map);
+
+    // 2. CRITICAL FIX: Create a dedicated Leaflet Vector Pane above the satellite layer
+    map.createPane('districtPane');
+    map.getPane('districtPane').style.zIndex = 500; // Always above tileLayer (which is 200)
 
     let districtLayer = null;
     let chartInstance = null;
@@ -233,37 +236,55 @@
       { key: 'pct_barren', label: 'Barren / River Chars', color: '#d95f0e' }
     ];
 
-    // Color ramp generator for single-metric view
+    // Single-metric color scale
     function getMetricColor(value, theme) {
       const v = parseFloat(value || 0);
       if (theme === 'pct_forest') {
-        return v > 50 ? '#00441b' : v > 35 ? '#1b7837' : v > 20 ? '#78c679' : v > 10 ? '#c2e699' : '#f7fcf5';
+        return v > 50 ? '#00441b' : v > 35 ? '#1b7837' : v > 20 ? '#78c679' : v > 10 ? '#c2e699' : '#a1d99b';
       } else if (theme === 'pct_cropland') {
-        return v > 50 ? '#b35806' : v > 35 ? '#f1a340' : v > 20 ? '#fee08b' : v > 10 ? '#d8daeb' : '#f7f7f7';
+        return v > 45 ? '#b35806' : v > 30 ? '#f1a340' : v > 15 ? '#fee08b' : '#ffffbf';
       } else if (theme === 'pct_water') {
-        return v > 20 ? '#08306b' : v > 12 ? '#2171b5' : v > 6 ? '#6baed6' : v > 2 ? '#c6dbef' : '#f7fbff';
+        return v > 15 ? '#08306b' : v > 10 ? '#2171b5' : v > 5 ? '#6baed6' : '#c6dbef';
       } else if (theme === 'pct_builtup') {
-        return v > 15 ? '#67000d' : v > 10 ? '#cb181d' : v > 5 ? '#fb6a4a' : v > 2 ? '#fcae91' : '#fff5f0';
+        return v > 12 ? '#67000d' : v > 8 ? '#cb181d' : v > 4 ? '#fb6a4a' : '#fcae91';
       } else {
-        return v > 25 ? '#006d2c' : v > 15 ? '#31a354' : v > 8 ? '#74c476' : '#edf8e9';
+        return v > 20 ? '#006d2c' : v > 10 ? '#31a354' : '#74c476';
       }
     }
 
+    // Determine dominant color dynamically if dominant_color property is absent
+    function getDominantColor(props) {
+      if (props.dominant_color) return props.dominant_color;
+      let maxVal = -1;
+      let dominantHex = '#0284c7';
+      classes.forEach(c => {
+        const val = parseFloat(props[c.key] || 0);
+        if (val > maxVal) {
+          maxVal = val;
+          dominantHex = c.color;
+        }
+      });
+      return dominantHex;
+    }
+
     function getDistrictStyle(feature) {
+      const p = feature.properties || {};
       let fillColor;
+
       if (currentTheme === 'dominant') {
-        fillColor = feature.properties?.dominant_color || '#38bdf8';
+        fillColor = getDominantColor(p);
       } else {
-        fillColor = getMetricColor(feature.properties?.[currentTheme], currentTheme);
+        fillColor = getMetricColor(p[currentTheme], currentTheme);
       }
 
       return {
+        pane: 'districtPane', // Bound to custom top-level pane
         fillColor: fillColor,
-        weight: 1.5,
-        opacity: 0.9,
-        color: '#ffffff',
+        weight: 2,
+        opacity: 1,
+        color: '#ffffff', // High-contrast crisp white outline
         dashArray: '2',
-        fillOpacity: currentTheme === 'dominant' ? 0.45 : 0.65
+        fillOpacity: currentTheme === 'dominant' ? 0.55 : 0.75
       };
     }
 
@@ -319,9 +340,15 @@
     }
 
     function highlightDistrict(layer, feature) {
-      if (selectedLayer) districtLayer.resetStyle(selectedLayer);
+      if (selectedLayer && districtLayer) {
+        districtLayer.resetStyle(selectedLayer);
+      }
       selectedLayer = layer;
-      selectedLayer.setStyle({ weight: 3, color: '#fbbf24', fillOpacity: 0.85 });
+      selectedLayer.setStyle({
+        weight: 3.5,
+        color: '#fbbf24',
+        fillOpacity: 0.85
+      });
       selectedLayer.bringToFront();
 
       const paddingBottom = window.innerWidth < 768 ? 220 : 40;
@@ -342,15 +369,14 @@
 
       layer.on({
         mouseover: (e) => {
-          if (window.innerWidth >= 768) {
-            e.target.setStyle({ weight: 3, color: '#fbbf24', fillOpacity: 0.75 });
+          if (window.innerWidth >= 768 && e.target !== selectedLayer) {
+            e.target.setStyle({ weight: 3, color: '#fbbf24', fillOpacity: 0.8 });
             e.target.bringToFront();
           }
         },
         mouseout: (e) => {
-          if (window.innerWidth >= 768) {
+          if (window.innerWidth >= 768 && e.target !== selectedLayer) {
             districtLayer.resetStyle(e.target);
-            if (selectedLayer) selectedLayer.setStyle({ weight: 3, color: '#fbbf24', fillOpacity: 0.85 });
           }
         },
         click: (e) => {
@@ -366,7 +392,7 @@
         geojsonData = data;
         const datalist = document.getElementById('district-list');
 
-        // Populate search datalist
+        // Populate search autocomplete
         data.features.forEach(f => {
           const name = f.properties?.name || f.properties?.DISTRICT || f.properties?.district;
           if (name) {
@@ -377,6 +403,7 @@
         });
 
         districtLayer = L.geoJSON(data, {
+          pane: 'districtPane',
           style: getDistrictStyle,
           onEachFeature: onEachFeature
         }).addTo(map);
@@ -390,7 +417,7 @@
       })
       .catch(err => console.error("Error loading GeoJSON:", err));
 
-    // Search bar handler
+    // Search bar listener
     document.getElementById('district-search').addEventListener('change', (e) => {
       const query = e.target.value.trim().toLowerCase();
       if (districtLookup[query]) {
@@ -398,14 +425,14 @@
       }
     });
 
-    // Theme filter handler
+    // Theme dropdown listener
     document.getElementById('theme-filter').addEventListener('change', (e) => {
       currentTheme = e.target.value;
       if (districtLayer) {
         districtLayer.setStyle(getDistrictStyle);
       }
       if (selectedLayer) {
-        selectedLayer.setStyle({ weight: 3, color: '#fbbf24', fillOpacity: 0.85 });
+        selectedLayer.setStyle({ weight: 3.5, color: '#fbbf24', fillOpacity: 0.85 });
       }
     });
   </script>
