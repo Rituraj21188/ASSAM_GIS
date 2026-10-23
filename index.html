@@ -57,29 +57,28 @@
 
     .card h3 { font-size: 0.9rem; margin-bottom: 6px; color: #f1f5f9; }
 
-    /* Search & Filter Controls */
     .control-group {
       display: flex;
       flex-direction: column;
-      gap: 6px;
+      gap: 8px;
     }
 
-    input[type="text"], select {
+    select {
       width: 100%;
       background: #0f172a;
       border: 1px solid #334155;
       color: #f8fafc;
-      padding: 8px 12px;
+      padding: 9px 12px;
       border-radius: 6px;
-      font-size: 0.82rem;
+      font-size: 0.84rem;
       outline: none;
+      cursor: pointer;
     }
 
-    input[type="text"]:focus, select:focus {
+    select:focus {
       border-color: #38bdf8;
     }
 
-    /* Stat Item Breakdown */
     .stat-row {
       display: flex;
       justify-content: space-between;
@@ -103,7 +102,6 @@
       border-radius: 6px;
       font-weight: 600;
       font-size: 0.82rem;
-      transition: background 0.2s;
     }
     .btn-3d:hover { background: #0369a1; }
 
@@ -116,28 +114,15 @@
       margin: 0 auto 8px auto;
     }
 
-    /* Mobile Drawer */
     @media (max-width: 768px) {
       body { flex-direction: column; }
-
-      #map {
-        position: absolute;
-        top: 0; left: 0; right: 0; bottom: 0;
-      }
-
+      #map { position: absolute; top: 0; left: 0; right: 0; bottom: 0; }
       #sidebar {
-        position: absolute;
-        bottom: 0; left: 0;
-        width: 100%;
-        max-height: 52vh;
-        border-left: none;
-        border-top: 2px solid rgba(56, 189, 248, 0.4);
-        border-top-left-radius: 16px;
-        border-top-right-radius: 16px;
-        box-shadow: 0 -8px 24px rgba(0, 0, 0, 0.7);
-        padding: 12px 16px 24px 16px;
+        position: absolute; bottom: 0; left: 0; width: 100%; max-height: 52vh;
+        border-left: none; border-top: 2px solid rgba(56, 189, 248, 0.4);
+        border-top-left-radius: 16px; border-top-right-radius: 16px;
+        box-shadow: 0 -8px 24px rgba(0, 0, 0, 0.7); padding: 12px 16px 24px 16px;
       }
-
       .drawer-handle { display: block; }
       h2 { font-size: 1.1rem; }
     }
@@ -155,13 +140,17 @@
       <p class="subtext">GIS Analytics & Interactive Land Classification</p>
     </div>
 
-    <!-- Search & Thematic Controls -->
+    <!-- District Selection & Layer Filter -->
     <div class="card control-group">
-      <input type="text" id="district-search" list="district-list" placeholder="🔍 Search District (e.g. Jorhat, Kamrup)..." />
-      <datalist id="district-list"></datalist>
+      <div>
+        <label style="font-size: 0.75rem; color: #94a3b8; display: block; margin-bottom: 4px;">Jump to District:</label>
+        <select id="district-dropdown">
+          <option value="">-- Choose District --</option>
+        </select>
+      </div>
 
-      <div style="display: flex; gap: 8px; align-items: center; margin-top: 4px;">
-        <label for="theme-filter" style="font-size: 0.75rem; color: #94a3b8; white-space: nowrap;">Map Layer:</label>
+      <div>
+        <label style="font-size: 0.75rem; color: #94a3b8; display: block; margin-bottom: 4px;">Map Choropleth Mode:</label>
         <select id="theme-filter">
           <option value="dominant">Dominant Land Cover</option>
           <option value="pct_forest">Forest / Tree Cover (%)</option>
@@ -175,10 +164,10 @@
 
     <a href="three_view.html" class="btn-3d">Switch to 3D Extruded Model &rarr;</a>
 
-    <!-- Active District Card -->
+    <!-- Active District Information -->
     <div class="card">
       <h3 id="district-name">Select a District</h3>
-      <p id="district-meta" class="subtext">Displaying land-use metrics</p>
+      <p id="district-meta" class="subtext">Click any district on map or select above</p>
       
       <div style="margin-top: 8px; height: 160px; position: relative;">
         <canvas id="lulcChart"></canvas>
@@ -189,7 +178,7 @@
 
     <!-- Legend -->
     <div class="card">
-      <h3 id="legend-title">Classification Key</h3>
+      <h3>Classification Key</h3>
       <div id="legend-container" style="display: grid; grid-template-columns: 1fr 1fr; gap: 6px; margin-top: 6px;">
         <div class="stat-tag"><span class="stat-pill" style="background: #1b7837;"></span> <span style="font-size:0.75rem;">Forest Cover</span></div>
         <div class="stat-tag"><span class="stat-pill" style="background: #78c679;"></span> <span style="font-size:0.75rem;">Shrub / Tea</span></div>
@@ -210,20 +199,15 @@
       zoomControl: true
     });
 
-    // 1. Google Earth Hybrid Satellite Base Layer
+    // Google Hybrid Basemap
     const googleHybrid = L.tileLayer('https://mt1.google.com/vt/lyrs=y&x={x}&y={y}&z={z}', {
       maxZoom: 20,
       attribution: 'Map &copy; Google'
     }).addTo(map);
 
-    // 2. CRITICAL FIX: Create a dedicated Leaflet Vector Pane above the satellite layer
-    map.createPane('districtPane');
-    map.getPane('districtPane').style.zIndex = 500; // Always above tileLayer (which is 200)
-
     let districtLayer = null;
     let chartInstance = null;
     let selectedLayer = null;
-    let geojsonData = null;
     let districtLookup = {};
     let currentTheme = 'dominant';
 
@@ -236,7 +220,6 @@
       { key: 'pct_barren', label: 'Barren / River Chars', color: '#d95f0e' }
     ];
 
-    // Single-metric color scale
     function getMetricColor(value, theme) {
       const v = parseFloat(value || 0);
       if (theme === 'pct_forest') {
@@ -252,11 +235,10 @@
       }
     }
 
-    // Determine dominant color dynamically if dominant_color property is absent
     function getDominantColor(props) {
       if (props.dominant_color) return props.dominant_color;
       let maxVal = -1;
-      let dominantHex = '#0284c7';
+      let dominantHex = '#fecc5c';
       classes.forEach(c => {
         const val = parseFloat(props[c.key] || 0);
         if (val > maxVal) {
@@ -278,13 +260,12 @@
       }
 
       return {
-        pane: 'districtPane', // Bound to custom top-level pane
         fillColor: fillColor,
         weight: 2,
         opacity: 1,
-        color: '#ffffff', // High-contrast crisp white outline
+        color: '#ffffff',
         dashArray: '2',
-        fillOpacity: currentTheme === 'dominant' ? 0.55 : 0.75
+        fillOpacity: currentTheme === 'dominant' ? 0.6 : 0.75
       };
     }
 
@@ -345,27 +326,32 @@
       }
       selectedLayer = layer;
       selectedLayer.setStyle({
-        weight: 3.5,
+        weight: 4,
         color: '#fbbf24',
-        fillOpacity: 0.85
+        fillOpacity: 0.9
       });
       selectedLayer.bringToFront();
 
-      const paddingBottom = window.innerWidth < 768 ? 220 : 40;
+      // Ensure proper padding so district is visible above mobile drawer
+      const paddingBottom = window.innerWidth < 768 ? 240 : 40;
       map.fitBounds(layer.getBounds(), {
-        paddingTopLeft: [20, 20],
-        paddingBottomRight: [20, paddingBottom]
+        paddingTopLeft: [30, 30],
+        paddingBottomRight: [30, paddingBottom]
       });
 
       const props = feature.properties || {};
       const dName = props.name || props.DISTRICT || props.district || "Assam District";
       updateDetails(dName, props);
+
+      // Keep dropdown in sync
+      const dropdown = document.getElementById('district-dropdown');
+      if (dropdown) dropdown.value = dName;
     }
 
     function onEachFeature(feature, layer) {
       const props = feature.properties || {};
       const dName = props.name || props.DISTRICT || props.district || "Assam District";
-      districtLookup[dName.toLowerCase()] = { layer, feature };
+      districtLookup[dName] = { layer, feature };
 
       layer.on({
         mouseover: (e) => {
@@ -385,25 +371,29 @@
       });
     }
 
-    // Load GeoJSON Dataset
+    // Load GeoJSON with Polygon-only filter
     fetch('assam_districts.geojson.json')
       .then(res => res.json())
       .then(data => {
-        geojsonData = data;
-        const datalist = document.getElementById('district-list');
+        // Strip out any point geometries from Mapshaper
+        data.features = data.features.filter(f => 
+          f.geometry && (f.geometry.type === 'Polygon' || f.geometry.type === 'MultiPolygon')
+        );
 
-        // Populate search autocomplete
+        const dropdown = document.getElementById('district-dropdown');
+
+        // Populate dropdown with all polygon names
         data.features.forEach(f => {
           const name = f.properties?.name || f.properties?.DISTRICT || f.properties?.district;
           if (name) {
             const opt = document.createElement('option');
             opt.value = name;
-            datalist.appendChild(opt);
+            opt.innerText = name;
+            dropdown.appendChild(opt);
           }
         });
 
         districtLayer = L.geoJSON(data, {
-          pane: 'districtPane',
           style: getDistrictStyle,
           onEachFeature: onEachFeature
         }).addTo(map);
@@ -411,17 +401,16 @@
         // Preload first district
         if (data.features.length > 0) {
           const first = data.features[0];
-          const firstName = first.properties?.name || "Assam District";
-          updateDetails(firstName, first.properties);
+          highlightDistrict(districtLookup[first.properties?.name || first.properties?.DISTRICT].layer, first);
         }
       })
       .catch(err => console.error("Error loading GeoJSON:", err));
 
-    // Search bar listener
-    document.getElementById('district-search').addEventListener('change', (e) => {
-      const query = e.target.value.trim().toLowerCase();
-      if (districtLookup[query]) {
-        highlightDistrict(districtLookup[query].layer, districtLookup[query].feature);
+    // Dropdown change handler
+    document.getElementById('district-dropdown').addEventListener('change', (e) => {
+      const name = e.target.value;
+      if (districtLookup[name]) {
+        highlightDistrict(districtLookup[name].layer, districtLookup[name].feature);
       }
     });
 
@@ -432,7 +421,7 @@
         districtLayer.setStyle(getDistrictStyle);
       }
       if (selectedLayer) {
-        selectedLayer.setStyle({ weight: 3.5, color: '#fbbf24', fillOpacity: 0.85 });
+        selectedLayer.setStyle({ weight: 4, color: '#fbbf24', fillOpacity: 0.9 });
       }
     });
   </script>
