@@ -1,0 +1,159 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>Assam 3D Geospatial Prism - Three.js</title>
+  <style>
+    body { margin: 0; overflow: hidden; background: #030712; font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, sans-serif; }
+    #hud {
+      position: absolute; top: 20px; left: 20px; color: #fff;
+      background: rgba(15, 23, 42, 0.85); backdrop-filter: blur(8px);
+      padding: 16px 20px; border-radius: 8px; border: 1px solid rgba(255,255,255,0.1);
+      pointer-events: auto; z-index: 10; max-width: 320px;
+    }
+    h1 { font-size: 1.1rem; margin: 0 0 6px 0; color: #38bdf8; }
+    p { font-size: 0.8rem; color: #94a3b8; margin: 0 0 10px 0; }
+    .back-btn {
+      color: #38bdf8; text-decoration: none; font-size: 0.85rem; font-weight: 600;
+    }
+    #tooltip {
+      position: absolute; display: none; background: rgba(0,0,0,0.85);
+      color: #fff; padding: 8px 12px; border-radius: 4px; font-size: 0.8rem;
+      pointer-events: none; z-index: 20; border: 1px solid #38bdf8;
+    }
+  </style>
+</head>
+<body>
+  <div id="hud">
+    <h1>Assam 3D Geospatial Model</h1>
+    <p>Districts extruded using real LULC coverage metrics. Rotate with Left Click, Pan with Right Click, Zoom with Scroll.</p>
+    <a href="index.html" class="back-btn">&larr; Back to 2D Map</a>
+  </div>
+  <div id="tooltip"></div>
+
+  <!-- Three.js and OrbitControls -->
+  <script src="https://cdnjs.cloudflare.com/ajax/libs/three.js/r128/three.min.js"></script>
+  <script src="https://cdn.jsdelivr.net/npm/three@0.128.0/examples/js/controls/OrbitControls.js"></script>
+
+  <script>
+    const scene = new THREE.Scene();
+    scene.background = new THREE.Color(0x030712);
+
+    const camera = new THREE.PerspectiveCamera(45, window.innerWidth / window.innerHeight, 0.1, 1000);
+    camera.position.set(0, -75, 80);
+
+    const renderer = new THREE.WebGLRenderer({ antialias: true });
+    renderer.setSize(window.innerWidth, window.innerHeight);
+    renderer.setPixelRatio(window.devicePixelRatio);
+    renderer.shadowMap.enabled = true;
+    document.body.appendChild(renderer.domElement);
+
+    const controls = new THREE.OrbitControls(camera, renderer.domElement);
+    controls.enableDamping = true;
+    controls.dampingFactor = 0.05;
+
+    // Lighting
+    scene.add(new THREE.AmbientLight(0xffffff, 0.7));
+    const dirLight = new THREE.DirectionalLight(0xffffff, 0.9);
+    dirLight.position.set(60, -80, 90);
+    scene.add(dirLight);
+
+    // Center coordinates for Assam & scale factor
+    const CENTER_LON = 92.9376;
+    const CENTER_LAT = 26.2006;
+    const SCALE = 14.0;
+
+    const districtMeshes = [];
+
+    fetch('assam_districts.geojson.json')
+      .then(res => res.json())
+      .then(data => {
+        data.features.forEach(feature => {
+          const props = feature.properties || {};
+          const geom = feature.geometry;
+
+          // Extrude height based on cropland + forest percentage
+          const agroPct = props.pct_cropland ?? 20;
+          const height = Math.max(0.5, (agroPct / 100) * 8);
+
+          const polygons = geom.type === 'Polygon' ? [geom.coordinates] : geom.coordinates;
+
+          polygons.forEach(poly => {
+            const shape = new THREE.Shape();
+            const exterior = poly[0];
+
+            exterior.forEach((pt, i) => {
+              const x = (pt[0] - CENTER_LON) * SCALE;
+              const y = (pt[1] - CENTER_LAT) * SCALE;
+              if (i === 0) shape.moveTo(x, y);
+              else shape.lineTo(x, y);
+            });
+
+            const extrudeGeom = new THREE.ExtrudeGeometry(shape, {
+              depth: height,
+              bevelEnabled: false
+            });
+
+            const mat = new THREE.MeshLambertMaterial({
+              color: new THREE.Color().setHSL(0.55 - (height / 25), 0.75, 0.45),
+              transparent: true,
+              opacity: 0.85
+            });
+
+            const mesh = new THREE.Mesh(extrudeGeom, mat);
+            mesh.userData = {
+              name: props.name || props.DISTRICT || "District",
+              cropland: props.pct_cropland ?? "N/A",
+              forest: props.pct_forest ?? "N/A"
+            };
+
+            scene.add(mesh);
+            districtMeshes.push(mesh);
+
+            // Wireframe borders
+            const edges = new THREE.EdgesGeometry(extrudeGeom);
+            const line = new THREE.LineSegments(edges, new THREE.LineBasicMaterial({ color: 0x38bdf8, opacity: 0.4 }));
+            scene.add(line);
+          });
+        });
+      });
+
+    // Tooltip Interaction
+    const raycaster = new THREE.Raycaster();
+    const mouse = new THREE.Vector2();
+    const tooltip = document.getElementById('tooltip');
+
+    window.addEventListener('mousemove', (e) => {
+      mouse.x = (e.clientX / window.innerWidth) * 2 - 1;
+      mouse.y = -(e.clientY / window.innerHeight) * 2 + 1;
+
+      raycaster.setFromCamera(mouse, camera);
+      const intersects = raycaster.intersectObjects(districtMeshes);
+
+      if (intersects.length > 0) {
+        const item = intersects[0].object.userData;
+        tooltip.style.display = 'block';
+        tooltip.style.left = e.clientX + 12 + 'px';
+        tooltip.style.top = e.clientY + 12 + 'px';
+        tooltip.innerHTML = `<strong>${item.name}</strong><br/>Cropland: ${item.cropland}%<br/>Forest: ${item.forest}%`;
+      } else {
+        tooltip.style.display = 'none';
+      }
+    });
+
+    function animate() {
+      requestAnimationFrame(animate);
+      controls.update();
+      renderer.render(scene, camera);
+    }
+    animate();
+
+    window.addEventListener('resize', () => {
+      camera.aspect = window.innerWidth / window.innerHeight;
+      camera.updateProjectionMatrix();
+      renderer.setSize(window.innerWidth, window.innerHeight);
+    });
+  </script>
+</body>
+</html>
