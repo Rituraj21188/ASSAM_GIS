@@ -2,8 +2,8 @@
 <html lang="en">
 <head>
   <meta charset="UTF-8" />
-  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
-  <title>Assam 2026 LULC Analytics</title>
+  <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no" />
+  <title>Assam 2026 LULC Analytics Portal</title>
 
   <!-- Leaflet CSS -->
   <link rel="stylesheet" href="https://unpkg.com/leaflet@1.9.4/dist/leaflet.css" />
@@ -12,99 +12,189 @@
 
   <style>
     * { box-sizing: border-box; margin: 0; padding: 0; }
-    body { font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, sans-serif; display: flex; height: 100vh; background: #0b0f17; color: #e2e8f0; overflow: hidden; }
-
-    #map { flex: 1; height: 100%; z-index: 1; }
-
-    #sidebar {
-      width: 400px;
-      height: 100%;
-      background: rgba(15, 23, 42, 0.95);
-      backdrop-filter: blur(8px);
-      padding: 24px;
+    
+    body {
+      font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, sans-serif;
+      height: 100vh;
+      width: 100vw;
+      background: #0b0f17;
+      color: #e2e8f0;
+      overflow: hidden;
       display: flex;
-      flex-direction: column;
-      gap: 16px;
-      overflow-y: auto;
-      z-index: 2;
-      border-left: 1px solid rgba(255, 255, 255, 0.1);
     }
 
-    h2 { font-size: 1.3rem; font-weight: 700; color: #38bdf8; }
-    p.subtext { font-size: 0.82rem; color: #94a3b8; }
+    #map {
+      flex: 1;
+      height: 100%;
+      width: 100%;
+      z-index: 1;
+    }
+
+    /* Desktop Sidebar Layout */
+    #sidebar {
+      width: 410px;
+      height: 100%;
+      background: rgba(15, 23, 42, 0.95);
+      backdrop-filter: blur(12px);
+      padding: 20px;
+      display: flex;
+      flex-direction: column;
+      gap: 14px;
+      overflow-y: auto;
+      z-index: 1000;
+      border-left: 1px solid rgba(255, 255, 255, 0.1);
+      transition: transform 0.3s cubic-bezier(0.16, 1, 0.3, 1);
+    }
+
+    h2 { font-size: 1.25rem; font-weight: 700; color: #38bdf8; }
+    p.subtext { font-size: 0.8rem; color: #94a3b8; }
 
     .card {
       background: #1e293b;
       border-radius: 8px;
-      padding: 16px;
+      padding: 14px;
       border: 1px solid #334155;
     }
 
-    .card h3 { font-size: 0.95rem; margin-bottom: 6px; color: #f1f5f9; }
+    .card h3 { font-size: 0.92rem; margin-bottom: 4px; color: #f1f5f9; }
 
-    .legend-grid { display: grid; grid-template-columns: 1fr 1fr; gap: 8px; margin-top: 8px; }
-    .legend-item { display: flex; align-items: center; gap: 8px; font-size: 0.8rem; color: #cbd5e1; }
-    .color-box { width: 14px; height: 14px; border-radius: 3px; }
+    /* Stat Item Breakdown */
+    .stat-row {
+      display: flex;
+      justify-content: space-between;
+      align-items: center;
+      padding: 6px 0;
+      border-bottom: 1px solid #334155;
+      font-size: 0.8rem;
+    }
+    .stat-row:last-child { border-bottom: none; }
+    .stat-tag { display: flex; align-items: center; gap: 8px; }
+    .stat-pill { width: 10px; height: 10px; border-radius: 2px; flex-shrink: 0; }
+    .stat-val { font-weight: 600; color: #f8fafc; }
 
     .btn-3d {
-      display: inline-block;
+      display: block;
       text-align: center;
       background: #0284c7;
       color: white;
       text-decoration: none;
-      padding: 10px 14px;
+      padding: 9px 12px;
       border-radius: 6px;
       font-weight: 600;
-      font-size: 0.85rem;
-      transition: background 0.2s;
+      font-size: 0.82rem;
     }
     .btn-3d:hover { background: #0369a1; }
+
+    /* Mobile Drawer Pull Tab */
+    .drawer-handle {
+      display: none;
+      width: 44px;
+      height: 5px;
+      background: #475569;
+      border-radius: 3px;
+      margin: 0 auto 10px auto;
+      cursor: pointer;
+    }
+
+    /* -------------------------------------------------------------
+       MOBILE RESPONSIVENESS (< 768px)
+    -------------------------------------------------------------- */
+    @media (max-width: 768px) {
+      body {
+        flex-direction: column;
+      }
+
+      #map {
+        position: absolute;
+        top: 0;
+        left: 0;
+        right: 0;
+        bottom: 0;
+        height: 100%;
+      }
+
+      #sidebar {
+        position: absolute;
+        bottom: 0;
+        left: 0;
+        width: 100%;
+        max-height: 50vh; /* Takes lower half of the phone screen */
+        border-left: none;
+        border-top: 2px solid rgba(56, 189, 248, 0.4);
+        border-top-left-radius: 16px;
+        border-top-right-radius: 16px;
+        box-shadow: 0 -8px 24px rgba(0, 0, 0, 0.7);
+        padding: 12px 16px 24px 16px;
+        gap: 12px;
+      }
+
+      .drawer-handle {
+        display: block;
+      }
+
+      h2 { font-size: 1.1rem; }
+      
+      .leaflet-top.leaflet-left {
+        top: 10px;
+        left: 10px;
+      }
+    }
   </style>
 </head>
 <body>
 
+  <!-- Map Container -->
   <div id="map"></div>
 
+  <!-- Sidebar / Mobile Drawer -->
   <div id="sidebar">
+    <div class="drawer-handle"></div>
+
     <div>
       <h2>Assam 2026 LULC Explorer</h2>
-      <p class="subtext">GIS Analytics & District Land Classification</p>
+      <p class="subtext">Tap or click any district to view real land coverage</p>
     </div>
 
     <a href="three_view.html" class="btn-3d">Switch to 3D Extruded Model &rarr;</a>
 
-    <!-- District Card -->
+    <!-- Active District Card -->
     <div class="card">
       <h3 id="district-name">Select a District</h3>
-      <p id="district-meta" class="subtext">Hover or click any district boundary to display LULC distribution.</p>
-      <div style="margin-top: 14px; height: 220px;">
+      <p id="district-meta" class="subtext">Displaying land-use metrics</p>
+      
+      <div style="margin-top: 8px; height: 160px; position: relative;">
         <canvas id="lulcChart"></canvas>
       </div>
+
+      <div id="stat-list" style="margin-top: 10px;"></div>
     </div>
 
-    <!-- Legend -->
+    <!-- Map Color Legend -->
     <div class="card">
-      <h3>Classification Key</h3>
-      <div class="legend-grid">
-        <div class="legend-item"><span class="color-box" style="background: #1b7837;"></span> Forest</div>
-        <div class="legend-item"><span class="color-box" style="background: #a6d96a;"></span> Tea / Agro</div>
-        <div class="legend-item"><span class="color-box" style="background: #ffffbf;"></span> Cropland</div>
-        <div class="legend-item"><span class="color-box" style="background: #2b83ba;"></span> Water</div>
-        <div class="legend-item"><span class="color-box" style="background: #d7191c;"></span> Built-up</div>
-        <div class="legend-item"><span class="color-box" style="background: #fdae61;"></span> Barren / Sandbars</div>
+      <h3>Classification Key (Dominant Color)</h3>
+      <div style="display: grid; grid-template-columns: 1fr 1fr; gap: 6px; margin-top: 6px;">
+        <div class="stat-tag"><span class="stat-pill" style="background: #1b7837;"></span> <span style="font-size:0.75rem;">Forest Cover</span></div>
+        <div class="stat-tag"><span class="stat-pill" style="background: #78c679;"></span> <span style="font-size:0.75rem;">Shrub / Tea</span></div>
+        <div class="stat-tag"><span class="stat-pill" style="background: #fecc5c;"></span> <span style="font-size:0.75rem;">Cropland</span></div>
+        <div class="stat-tag"><span class="stat-pill" style="background: #2b83ba;"></span> <span style="font-size:0.75rem;">Water Bodies</span></div>
+        <div class="stat-tag"><span class="stat-pill" style="background: #e31a1c;"></span> <span style="font-size:0.75rem;">Built-up</span></div>
+        <div class="stat-tag"><span class="stat-pill" style="background: #d95f0e;"></span> <span style="font-size:0.75rem;">Barren / Chars</span></div>
       </div>
     </div>
   </div>
 
+  <!-- Leaflet JS -->
   <script src="https://unpkg.com/leaflet@1.9.4/dist/leaflet.js"></script>
 
   <script>
+    // Initialize Leaflet Map
     const map = L.map('map', {
       center: [26.2006, 92.9376],
-      zoom: 8
+      zoom: window.innerWidth < 768 ? 7 : 8,
+      zoomControl: true
     });
 
-    // Google Earth Hybrid Satellite
+    // Google Earth Hybrid Satellite Base Layer
     const googleHybrid = L.tileLayer('https://mt1.google.com/vt/lyrs=y&x={x}&y={y}&z={z}', {
       maxZoom: 20,
       attribution: 'Map &copy; Google'
@@ -112,14 +202,46 @@
 
     let districtLayer = null;
     let chartInstance = null;
+    let selectedLayer = null;
 
-    function renderChart(name, values) {
+    const classes = [
+      { key: 'pct_forest', label: 'Forest / Tree Cover', color: '#1b7837' },
+      { key: 'pct_shrub_tea', label: 'Shrub / Tea Gardens', color: '#78c679' },
+      { key: 'pct_cropland', label: 'Cropland / Agriculture', color: '#fecc5c' },
+      { key: 'pct_water', label: 'Water (Rivers/Wetlands)', color: '#2b83ba' },
+      { key: 'pct_builtup', label: 'Built-up / Urban', color: '#e31a1c' },
+      { key: 'pct_barren', label: 'Barren / River Chars', color: '#d95f0e' }
+    ];
+
+    function updateDetails(name, properties) {
       document.getElementById('district-name').innerText = name;
-      document.getElementById('district-meta').innerText = 'Relative Area Coverage (%)';
+      document.getElementById('district-meta').innerText = 'Relative Area Percentage (%)';
 
-      const labels = ['Forest', 'Tea/Agro', 'Cropland', 'Water', 'Built-up', 'Barren'];
-      const bgColors = ['#1b7837', '#a6d96a', '#ffffbf', '#2b83ba', '#d7191c', '#fdae61'];
+      const values = [];
+      const labels = [];
+      const colors = [];
+      let statListHtml = '';
 
+      classes.forEach(c => {
+        const val = parseFloat(properties[c.key] ?? 0);
+        values.push(val);
+        labels.push(c.label);
+        colors.push(c.color);
+
+        statListHtml += `
+          <div class="stat-row">
+            <div class="stat-tag">
+              <span class="stat-pill" style="background: ${c.color};"></span>
+              <span>${c.label}</span>
+            </div>
+            <span class="stat-val">${val.toFixed(1)}%</span>
+          </div>
+        `;
+      });
+
+      document.getElementById('stat-list').innerHTML = statListHtml;
+
+      // Update Chart.js Instance
       const ctx = document.getElementById('lulcChart').getContext('2d');
       if (chartInstance) chartInstance.destroy();
 
@@ -129,7 +251,7 @@
           labels: labels,
           datasets: [{
             data: values,
-            backgroundColor: bgColors,
+            backgroundColor: colors,
             borderWidth: 0
           }]
         },
@@ -137,72 +259,76 @@
           responsive: true,
           maintainAspectRatio: false,
           plugins: {
-            legend: { position: 'bottom', labels: { boxWidth: 8, color: '#94a3b8', font: { size: 10 } } }
+            legend: { display: false }
           }
         }
       });
     }
 
+    // Dynamic style based on dominant land cover class
+    function getDistrictStyle(feature) {
+      const dominantColor = feature.properties?.dominant_color || '#38bdf8';
+      return {
+        fillColor: dominantColor,
+        weight: 1.5,
+        opacity: 0.9,
+        color: '#ffffff',
+        dashArray: '2',
+        fillOpacity: 0.45
+      };
+    }
+
     function onEachFeature(feature, layer) {
       layer.on({
         mouseover: (e) => {
-          e.target.setStyle({ weight: 3, color: '#f59e0b', fillOpacity: 0.35 });
-          e.target.bringToFront();
+          if (window.innerWidth >= 768) {
+            e.target.setStyle({ weight: 3, color: '#fbbf24', fillOpacity: 0.75 });
+            e.target.bringToFront();
+          }
         },
         mouseout: (e) => {
-          districtLayer.resetStyle(e.target);
+          if (window.innerWidth >= 768) {
+            districtLayer.resetStyle(e.target);
+            if (selectedLayer) selectedLayer.setStyle({ weight: 3, color: '#fbbf24', fillOpacity: 0.75 });
+          }
         },
         click: (e) => {
-          map.fitBounds(e.target.getBounds(), { padding: [35, 35] });
+          if (selectedLayer) districtLayer.resetStyle(selectedLayer);
+          selectedLayer = e.target;
+          selectedLayer.setStyle({ weight: 3, color: '#fbbf24', fillOpacity: 0.75 });
+          selectedLayer.bringToFront();
+
+          // Responsive map bounds padding
+          const paddingBottom = window.innerWidth < 768 ? 220 : 40;
+          map.fitBounds(e.target.getBounds(), {
+            paddingTopLeft: [20, 20],
+            paddingBottomRight: [20, paddingBottom]
+          });
 
           const props = feature.properties || {};
-          const dName = props.name || props.DISTRICT || "District";
-
-          // Read calculated zonal stats directly from GeoJSON properties
-          const vals = [
-            props.pct_forest ?? 0,
-            props.pct_tea_agro ?? 0,
-            props.pct_cropland ?? 0,
-            props.pct_water ?? 0,
-            props.pct_builtup ?? 0,
-            props.pct_barren ?? 0
-          ];
-
-          renderChart(dName, vals);
+          const dName = props.name || props.DISTRICT || props.district || "Assam District";
+          updateDetails(dName, props);
         }
       });
     }
 
-    // Load GeoJSON directly from the updated repository file
+    // Load GeoJSON dataset from repository
     fetch('assam_districts.geojson.json')
       .then(res => res.json())
       .then(data => {
         districtLayer = L.geoJSON(data, {
-          style: {
-            fillColor: '#0284c7',
-            weight: 1.5,
-            opacity: 0.9,
-            color: '#38bdf8',
-            dashArray: '3',
-            fillOpacity: 0.12
-          },
+          style: getDistrictStyle,
           onEachFeature: onEachFeature
         }).addTo(map);
 
-        // Render first district automatically
+        // Preload the first district
         if (data.features && data.features.length > 0) {
-          const first = data.features[0].properties;
-          renderChart(first.name || "Assam", [
-            first.pct_forest ?? 30,
-            first.pct_tea_agro ?? 15,
-            first.pct_cropland ?? 35,
-            first.pct_water ?? 10,
-            first.pct_builtup ?? 5,
-            first.pct_barren ?? 5
-          ]);
+          const first = data.features[0];
+          const firstName = first.properties?.name || "Assam District";
+          updateDetails(firstName, first.properties);
         }
       })
-      .catch(err => console.error("Error loading GeoJSON:", err));
+      .catch(err => console.error("Error loading district GeoJSON:", err));
   </script>
 </body>
 </html>
