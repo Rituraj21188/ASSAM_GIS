@@ -3,50 +3,65 @@
 <head>
   <meta charset="UTF-8" />
   <meta name="viewport" content="width=device-width, initial-scale=1.0" />
-  <title>Assam LULC District GIS Dashboard</title>
+  <title>Assam 2026 LULC Analytics Portal</title>
 
   <!-- Leaflet CSS -->
   <link rel="stylesheet" href="https://unpkg.com/leaflet@1.9.4/dist/leaflet.css" />
+  <!-- Chart.js -->
   <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
+  <!-- GeoRaster & GeoBlaze for In-Browser Zonal Stats -->
+  <script src="https://unpkg.com/georaster"></script>
+  <script src="https://unpkg.com/georaster-layer-for-leaflet"></script>
+  <script src="https://unpkg.com/geoblaze"></script>
 
   <style>
     * { box-sizing: border-box; margin: 0; padding: 0; }
-    body { font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, sans-serif; display: flex; height: 100vh; background: #0f172a; color: #f8fafc; }
+    body { font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, sans-serif; display: flex; height: 100vh; background: #0b0f17; color: #e2e8f0; overflow: hidden; }
 
     #map { flex: 1; height: 100%; z-index: 1; }
 
     #sidebar {
-      width: 400px;
+      width: 390px;
       height: 100%;
       background: rgba(15, 23, 42, 0.95);
-      backdrop-filter: blur(10px);
-      padding: 24px;
+      backdrop-filter: blur(8px);
+      padding: 20px;
       display: flex;
       flex-direction: column;
-      gap: 16px;
+      gap: 14px;
       overflow-y: auto;
       z-index: 2;
       border-left: 1px solid rgba(255, 255, 255, 0.1);
     }
 
     h2 { font-size: 1.25rem; font-weight: 700; color: #38bdf8; }
-    p.subtext { font-size: 0.82rem; color: #94a3b8; }
+    p.subtext { font-size: 0.8rem; color: #94a3b8; }
 
     .card {
       background: #1e293b;
       border-radius: 8px;
-      padding: 16px;
+      padding: 14px;
       border: 1px solid #334155;
     }
 
-    .card h3 { font-size: 0.92rem; margin-bottom: 8px; color: #e2e8f0; }
+    .card h3 { font-size: 0.9rem; margin-bottom: 8px; color: #f1f5f9; }
 
-    .legend-grid { display: grid; grid-template-columns: 1fr 1fr; gap: 8px; margin-top: 8px; }
-    .legend-item { display: flex; align-items: center; gap: 8px; font-size: 0.8rem; color: #cbd5e1; }
+    .legend-grid { display: grid; grid-template-columns: 1fr 1fr; gap: 8px; margin-top: 6px; }
+    .legend-item { display: flex; align-items: center; gap: 8px; font-size: 0.78rem; color: #cbd5e1; }
     .color-box { width: 12px; height: 12px; border-radius: 2px; }
 
-    .slider-container { display: flex; flex-direction: column; gap: 6px; font-size: 0.85rem; }
+    .slider-box { display: flex; flex-direction: column; gap: 6px; font-size: 0.82rem; }
     input[type="range"] { accent-color: #38bdf8; cursor: pointer; }
+
+    #status-pill {
+      font-size: 0.75rem;
+      padding: 4px 8px;
+      border-radius: 4px;
+      background: #0284c7;
+      color: white;
+      display: inline-block;
+      margin-top: 4px;
+    }
   </style>
 </head>
 <body>
@@ -55,24 +70,25 @@
 
   <div id="sidebar">
     <div>
-      <h2>Assam LULC Explorer</h2>
-      <p class="subtext">District-level Land Classification Analytics</p>
+      <h2>Assam 2026 LULC Explorer</h2>
+      <p class="subtext">Client-Side Zonal Analytics (GeoBlaze + Leaflet)</p>
+      <span id="status-pill">Loading GeoTIFF raster...</span>
     </div>
 
-    <!-- Dynamic District Card -->
-    <div class="card" id="district-info">
+    <!-- District Inspector -->
+    <div class="card">
       <h3 id="district-name">Select a District</h3>
-      <p id="district-meta" class="subtext">Click any boundary to load land use ratios.</p>
-      <div style="margin-top: 12px; height: 210px;">
+      <p id="district-meta" class="subtext">Click any district boundary to run real-time zonal analysis.</p>
+      <div style="margin-top: 10px; height: 210px;">
         <canvas id="lulcChart"></canvas>
       </div>
     </div>
 
-    <!-- Transparency Slider -->
+    <!-- Opacity Control -->
     <div class="card">
-      <h3>LULC Layer Transparency</h3>
-      <div class="slider-container">
-        <input type="range" id="lulc-opacity" min="0" max="1" step="0.05" value="0.75" />
+      <h3>Raster Opacity</h3>
+      <div class="slider-box">
+        <input type="range" id="opacity-slider" min="0" max="1" step="0.05" value="0.75" />
       </div>
     </div>
 
@@ -98,10 +114,10 @@
       zoom: 8
     });
 
-    // Google Earth Hybrid Satellite Base Layer
+    // 1. Google Earth Hybrid Satellite
     const googleHybrid = L.tileLayer('https://mt1.google.com/vt/lyrs=y&x={x}&y={y}&z={z}', {
       maxZoom: 20,
-      attribution: 'Imagery &copy; Google'
+      attribution: 'Map &copy; Google'
     }).addTo(map);
 
     const osm = L.tileLayer('https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png', {
@@ -109,49 +125,57 @@
       attribution: '&copy; OpenStreetMap'
     });
 
-    // LULC Raster Overlay (replace with your exported png/tiles)
-    const lulcBounds = [[24.1, 89.6], [28.0, 96.1]];
-    const lulcOverlay = L.imageOverlay('assam_lulc.png', lulcBounds, {
-      opacity: 0.75
-    }).addTo(map);
-
-    document.getElementById('lulc-opacity').addEventListener('input', (e) => {
-      lulcOverlay.setOpacity(e.target.value);
-    });
-
-    // District Handling & Chart Binding
-    let districtLayer;
+    let globalGeoraster = null;
+    let lulcLayer = null;
+    let districtLayer = null;
     let chartInstance = null;
 
-    function style(feature) {
-      return {
-        fillColor: '#38bdf8',
-        weight: 1.5,
-        opacity: 0.8,
-        color: '#93c5fd',
-        dashArray: '3',
-        fillOpacity: 0.05
-      };
-    }
+    // Palette mapping by pixel class ID
+    const classColorMap = {
+      1: '#1b7837', // Forest
+      2: '#a6d96a', // Tea/Agro
+      3: '#ffffbf', // Cropland
+      4: '#2b83ba', // Water
+      5: '#d7191c', // Built-up
+      6: '#fdae61'  // Barren
+    };
 
-    function highlightFeature(e) {
-      const layer = e.target;
-      layer.setStyle({
-        weight: 2.5,
-        color: '#fbbf24',
-        dashArray: '',
-        fillOpacity: 0.25
+    // 2. Fetch and initialize GeoTIFF
+    fetch('Assam_LULC_2026.tif')
+      .then(response => response.arrayBuffer())
+      .then(parseGeoraster)
+      .then(georaster => {
+        globalGeoraster = georaster;
+
+        lulcLayer = new GeoRasterLayer({
+          georaster: georaster,
+          opacity: 0.75,
+          pixelValuesToColorFn: values => {
+            const val = values[0];
+            return classColorMap[val] || null;
+          },
+          resolution: 256
+        });
+        lulcLayer.addTo(map);
+
+        document.getElementById('status-pill').innerText = 'Raster & Engine Ready';
+        document.getElementById('status-pill').style.background = '#15803d';
+      })
+      .catch(err => {
+        console.error(err);
+        document.getElementById('status-pill').innerText = 'Raster Error (Verify File Exists)';
+        document.getElementById('status-pill').style.background = '#b91c1c';
       });
-      layer.bringToFront();
-    }
 
-    function resetHighlight(e) {
-      districtLayer.resetStyle(e.target);
-    }
+    // Opacity slider
+    document.getElementById('opacity-slider').addEventListener('input', (e) => {
+      if (lulcLayer) lulcLayer.setOpacity(e.target.value);
+    });
 
-    function renderChart(name, dataValues) {
+    // 3. Render Chart with Results
+    function renderChart(name, labels, dataValues, backgroundColors) {
       document.getElementById('district-name').innerText = name;
-      document.getElementById('district-meta').innerText = 'Area Percentage by Class (%)';
+      document.getElementById('district-meta').innerText = 'Computed Zonal Area (%)';
 
       const ctx = document.getElementById('lulcChart').getContext('2d');
       if (chartInstance) chartInstance.destroy();
@@ -159,10 +183,10 @@
       chartInstance = new Chart(ctx, {
         type: 'doughnut',
         data: {
-          labels: ['Forest', 'Tea/Agro', 'Cropland', 'Water', 'Built-up', 'Barren'],
+          labels: labels,
           datasets: [{
             data: dataValues,
-            backgroundColor: ['#1b7837', '#a6d96a', '#ffffbf', '#2b83ba', '#d7191c', '#fdae61'],
+            backgroundColor: backgroundColors,
             borderWidth: 0
           }]
         },
@@ -170,54 +194,104 @@
           responsive: true,
           maintainAspectRatio: false,
           plugins: {
-            legend: {
-              position: 'bottom',
-              labels: { boxWidth: 8, color: '#94a3b8', font: { size: 10 } }
-            }
+            legend: { position: 'bottom', labels: { boxWidth: 8, color: '#94a3b8', font: { size: 9 } } }
           }
         }
       });
     }
 
+    // 4. Client-side Zonal Histogram Calculation via GeoBlaze
+    async function processDistrictStats(feature) {
+      if (!globalGeoraster) {
+        alert("Raster is still streaming. Please wait a moment.");
+        return;
+      }
+
+      const dName = feature.properties.name || feature.properties.DISTRICT || "Assam District";
+      document.getElementById('district-name').innerText = `Analyzing ${dName}...`;
+
+      try {
+        // Run histogram clipped directly by the GeoJSON polygon geometry
+        const result = await geoblaze.histogram(globalGeoraster, feature.geometry, { scaleType: 'nominal' });
+        const hist = result[0] || {};
+
+        let totalPixels = 0;
+        const counts = {};
+
+        // Aggregate pixels ignoring 0 or nodata
+        for (const [key, count] of Object.entries(hist)) {
+          const val = parseInt(key, 10);
+          if (val > 0) {
+            counts[val] = count;
+            totalPixels += count;
+          }
+        }
+
+        const classNames = {
+          1: "Forest",
+          2: "Tea/Agro",
+          3: "Cropland",
+          4: "Water",
+          5: "Built-up",
+          6: "Barren"
+        };
+
+        const labels = [];
+        const percentages = [];
+        const bgColors = [];
+
+        for (let i = 1; i <= 6; i++) {
+          const count = counts[i] || 0;
+          const pct = totalPixels > 0 ? ((count / totalPixels) * 100).toFixed(2) : 0;
+          labels.push(classNames[i]);
+          percentages.push(pct);
+          bgColors.push(classColorMap[i]);
+        }
+
+        renderChart(dName, labels, percentages, bgColors);
+      } catch (err) {
+        console.error("Zonal calculation error:", err);
+        document.getElementById('district-meta').innerText = "Boundary lies outside raster extent or invalid geometry.";
+      }
+    }
+
     function onEachFeature(feature, layer) {
       layer.on({
-        mouseover: highlightFeature,
-        mouseout: resetHighlight,
+        mouseover: (e) => {
+          e.target.setStyle({ weight: 2.5, color: '#f59e0b', fillOpacity: 0.2 });
+          e.target.bringToFront();
+        },
+        mouseout: (e) => {
+          districtLayer.resetStyle(e.target);
+        },
         click: (e) => {
-          map.fitBounds(e.target.getBounds(), { padding: [40, 40] });
-
-          const props = feature.properties;
-          const districtName = props.name || props.DISTRICT || "District";
-
-          // Pull real percentages calculated by python script (fallback if missing)
-          const dataValues = [
-            props.pct_forest || 0,
-            props.pct_tea_agro || 0,
-            props.pct_cropland || 0,
-            props.pct_water || 0,
-            props.pct_builtup || 0,
-            props.pct_barren || 0
-          ];
-
-          renderChart(districtName, dataValues);
+          map.fitBounds(e.target.getBounds(), { padding: [30, 30] });
+          processDistrictStats(feature);
         }
       });
     }
 
-    // Load GeoJSON
-    fetch('assam_districts_lulc.geojson')
+    // 5. Load your district file directly from the repo
+    fetch('assam_districts.geojson.json')
       .then(res => res.json())
       .then(data => {
         districtLayer = L.geoJSON(data, {
-          style: style,
+          style: {
+            fillColor: '#38bdf8',
+            weight: 1.5,
+            opacity: 0.8,
+            color: '#60a5fa',
+            dashArray: '3',
+            fillOpacity: 0.05
+          },
           onEachFeature: onEachFeature
         }).addTo(map);
       })
-      .catch(err => console.error('Error loading GeoJSON:', err));
+      .catch(err => console.error("Could not load district GeoJSON:", err));
 
     L.control.layers(
       { "Google Hybrid": googleHybrid, "OpenStreetMap": osm },
-      { "LULC Overlay": lulcOverlay },
+      null,
       { position: 'topright' }
     ).addTo(map);
   </script>
