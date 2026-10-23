@@ -28,6 +28,7 @@
       height: 100%;
       width: 100%;
       z-index: 1;
+      background: #0b0f19;
     }
 
     /* Desktop Sidebar */
@@ -78,7 +79,7 @@
       text-transform: none;
     }
 
-    /* Segmented View Mode Tabs */
+    /* Segmented Mode Tabs */
     .view-mode-tabs {
       display: flex;
       background: #060a14;
@@ -108,7 +109,6 @@
       box-shadow: 0 2px 10px rgba(2, 132, 199, 0.5);
     }
 
-    /* Form Controls */
     .input-label {
       font-size: 0.75rem;
       color: #94a3b8;
@@ -130,7 +130,6 @@
     }
     select:focus { border-color: #38bdf8; }
 
-    /* Slider */
     .slider-container {
       display: flex;
       flex-direction: column;
@@ -143,7 +142,7 @@
       cursor: pointer;
     }
 
-    /* Stat Item Breakdown */
+    /* Stat Rows */
     .stat-row {
       display: flex;
       justify-content: space-between;
@@ -156,6 +155,18 @@
     .stat-tag { display: flex; align-items: center; gap: 8px; }
     .stat-pill { width: 12px; height: 12px; border-radius: 3px; flex-shrink: 0; box-shadow: 0 0 4px rgba(0,0,0,0.5); }
     .stat-val { font-weight: 700; color: #f8fafc; font-feature-settings: "tnum"; }
+
+    /* LULC Description Explainer */
+    .lulc-explainer-item {
+      margin-bottom: 8px;
+      font-size: 0.76rem;
+      line-height: 1.35;
+      color: #cbd5e1;
+    }
+    .lulc-explainer-item strong {
+      color: #f8fafc;
+    }
+    .lulc-explainer-item:last-child { margin-bottom: 0; }
 
     .btn-3d {
       display: block;
@@ -180,7 +191,7 @@
       margin: 0 auto 8px auto;
     }
 
-    /* Mobile (<768px) */
+    /* Mobile */
     @media (max-width: 768px) {
       body { flex-direction: column; }
       #map { position: absolute; top: 0; left: 0; right: 0; bottom: 0; }
@@ -262,19 +273,52 @@
       <div id="stat-list" style="margin-top: 10px;"></div>
     </div>
 
-    <!-- Legend -->
+    <!-- Classification Legend -->
     <div class="card">
       <h3>Active Palette Legend</h3>
       <div id="legend-items" style="display: grid; grid-template-columns: 1fr 1fr; gap: 8px; margin-top: 6px;"></div>
+    </div>
+
+    <!-- Brief LULC Classification Details -->
+    <div class="card">
+      <h3>Terrain Classification Guide</h3>
+      <div class="lulc-explainer-item">
+        <strong>🌲 Dense Forest / Canopy:</strong> Evergreen and semi-evergreen reserves, national parks (Kaziranga, Manas, Dibru-Saikhowa), and hill tract biomass.
+      </div>
+      <div class="lulc-explainer-item">
+        <strong>🍃 Tea Estates & Agro:</strong> Organized tea plantation estates across Upper Assam and North Bank agroforestry belts.
+      </div>
+      <div class="lulc-explainer-item">
+        <strong>🌾 Cropland / Agri:</strong> Paddy fields (Sali, Ahu, Boro), flood-receding agriculture, and fertile alluvial plain croplands.
+      </div>
+      <div class="lulc-explainer-item">
+        <strong>🌊 Water Bodies:</strong> Main Brahmaputra & Barak river channels, perennial tributaries, oxbow lakes (beels), and wetlands.
+      </div>
+      <div class="lulc-explainer-item">
+        <strong>🏢 Urban / Built-up:</strong> Municipal infrastructure, rural settlements, commercial hubs (Guwahati, Dibrugarh, Jorhat, Silchar).
+      </div>
+      <div class="lulc-explainer-item">
+        <strong>🏖️ Chars & River Sandbars:</strong> Active alluvial sandbars, seasonal river islands, and erosion-prone deposition stretches.
+      </div>
     </div>
   </div>
 
   <script src="https://unpkg.com/leaflet@1.9.4/dist/leaflet.js"></script>
 
   <script>
+    // 1. BOUNDING BOX LOCKDOWN: Restrict view strictly to Assam and immediate buffer
+    const assamBounds = L.latLngBounds(
+      L.latLng(23.5, 89.0), // Southwest bound (Meghalaya/Bangladesh border buffer)
+      L.latLng(28.8, 96.8)  // Northeast bound (Arunachal/Upper Assam border buffer)
+    );
+
     const map = L.map('map', {
       center: [26.2006, 92.9376],
       zoom: window.innerWidth < 768 ? 7 : 8,
+      minZoom: 7,                  // Stops zoom-out beyond Northeast India
+      maxZoom: 18,                 // Allows deep satellite inspection
+      maxBounds: assamBounds,      // Bounding box lock
+      maxBoundsViscosity: 1.0,     // Bounces camera back if user attempts to pan away
       zoomControl: true
     });
 
@@ -288,12 +332,11 @@
     let chartInstance = null;
     let geojsonData = null;
     let districtLookup = {};
-    let activeMode = 'state'; // 'state', 'all', 'focus'
+    let activeMode = 'state';
     let selectedDistrictName = null;
     let globalOpacity = 0.70;
     let activePaletteKey = 'cyberpunk';
 
-    // 5 Differential Color Ramps with exact RGB vectors
     const COLOR_RAMPS = {
       cyberpunk: {
         name: "Cyberpunk Neon",
@@ -346,7 +389,6 @@
       return COLOR_RAMPS[activePaletteKey];
     }
 
-    // Blend RGB based on exact district class percentages
     function computeDynamicDistrictColor(p) {
       const palette = getActivePalette();
       let r = 0, g = 0, b = 0, totalWeight = 0;
@@ -355,7 +397,7 @@
         if (key === 'name') return;
         const cls = palette[key];
         const pct = parseFloat(p[key] || 0);
-        const weight = Math.pow(pct, 1.35); // Accentuate dominant land use
+        const weight = Math.pow(pct, 1.35);
         r += cls.rgb[0] * weight;
         g += cls.rgb[1] * weight;
         b += cls.rgb[2] * weight;
@@ -411,7 +453,6 @@
           fillOpacity: isSelected ? Math.min(1.0, globalOpacity + 0.25) : globalOpacity
         };
       } else {
-        // Focus Mode: Highlighted target + visible translucent boundaries for surrounding districts
         if (isSelected) {
           return {
             fillColor: dynamicColor,
@@ -639,7 +680,7 @@
       })
       .catch(err => console.error("Error loading GeoJSON:", err));
 
-    // Color Ramp Change Event Listener
+    // Ramp Selector
     document.getElementById('ramp-select').addEventListener('change', (e) => {
       activePaletteKey = e.target.value;
       updateLegend();
