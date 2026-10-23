@@ -30,20 +30,19 @@
       z-index: 1;
     }
 
-    /* Desktop Sidebar Layout */
+    /* Desktop Sidebar */
     #sidebar {
-      width: 410px;
+      width: 420px;
       height: 100%;
       background: rgba(15, 23, 42, 0.95);
       backdrop-filter: blur(12px);
       padding: 20px;
       display: flex;
       flex-direction: column;
-      gap: 14px;
+      gap: 12px;
       overflow-y: auto;
       z-index: 1000;
       border-left: 1px solid rgba(255, 255, 255, 0.1);
-      transition: transform 0.3s cubic-bezier(0.16, 1, 0.3, 1);
     }
 
     h2 { font-size: 1.25rem; font-weight: 700; color: #38bdf8; }
@@ -56,7 +55,30 @@
       border: 1px solid #334155;
     }
 
-    .card h3 { font-size: 0.92rem; margin-bottom: 4px; color: #f1f5f9; }
+    .card h3 { font-size: 0.9rem; margin-bottom: 6px; color: #f1f5f9; }
+
+    /* Search & Filter Controls */
+    .control-group {
+      display: flex;
+      flex-direction: column;
+      gap: 6px;
+    }
+
+    input[type="text"], select {
+      width: 100%;
+      background: #0f172a;
+      border: 1px solid #334155;
+      color: #f8fafc;
+      padding: 8px 12px;
+      border-radius: 6px;
+      font-size: 0.82rem;
+      outline: none;
+      transition: border-color 0.2s;
+    }
+
+    input[type="text"]:focus, select:focus {
+      border-color: #38bdf8;
+    }
 
     /* Stat Item Breakdown */
     .stat-row {
@@ -82,77 +104,74 @@
       border-radius: 6px;
       font-weight: 600;
       font-size: 0.82rem;
+      transition: background 0.2s;
     }
     .btn-3d:hover { background: #0369a1; }
 
-    /* Mobile Drawer Pull Tab */
     .drawer-handle {
       display: none;
       width: 44px;
       height: 5px;
       background: #475569;
       border-radius: 3px;
-      margin: 0 auto 10px auto;
-      cursor: pointer;
+      margin: 0 auto 8px auto;
     }
 
-    /* -------------------------------------------------------------
-       MOBILE RESPONSIVENESS (< 768px)
-    -------------------------------------------------------------- */
+    /* Mobile Responsiveness */
     @media (max-width: 768px) {
-      body {
-        flex-direction: column;
-      }
+      body { flex-direction: column; }
 
       #map {
         position: absolute;
-        top: 0;
-        left: 0;
-        right: 0;
-        bottom: 0;
-        height: 100%;
+        top: 0; left: 0; right: 0; bottom: 0;
       }
 
       #sidebar {
         position: absolute;
-        bottom: 0;
-        left: 0;
+        bottom: 0; left: 0;
         width: 100%;
-        max-height: 50vh; /* Takes lower half of the phone screen */
+        max-height: 52vh;
         border-left: none;
         border-top: 2px solid rgba(56, 189, 248, 0.4);
         border-top-left-radius: 16px;
         border-top-right-radius: 16px;
         box-shadow: 0 -8px 24px rgba(0, 0, 0, 0.7);
         padding: 12px 16px 24px 16px;
-        gap: 12px;
       }
 
-      .drawer-handle {
-        display: block;
-      }
-
+      .drawer-handle { display: block; }
       h2 { font-size: 1.1rem; }
-      
-      .leaflet-top.leaflet-left {
-        top: 10px;
-        left: 10px;
-      }
     }
   </style>
 </head>
 <body>
 
-  <!-- Map Container -->
   <div id="map"></div>
 
-  <!-- Sidebar / Mobile Drawer -->
   <div id="sidebar">
     <div class="drawer-handle"></div>
 
     <div>
       <h2>Assam 2026 LULC Explorer</h2>
-      <p class="subtext">Tap or click any district to view real land coverage</p>
+      <p class="subtext">GIS Analytics & Interactive Land Classification</p>
+    </div>
+
+    <!-- Search & Thematic Controls -->
+    <div class="card control-group">
+      <input type="text" id="district-search" list="district-list" placeholder="🔍 Search District (e.g. Jorhat, Kamrup)..." />
+      <datalist id="district-list"></datalist>
+
+      <div style="display: flex; gap: 8px; align-items: center; margin-top: 4px;">
+        <label for="theme-filter" style="font-size: 0.75rem; color: #94a3b8; white-space: nowrap;">Map Layer:</label>
+        <select id="theme-filter">
+          <option value="dominant">Dominant Land Cover</option>
+          <option value="pct_forest">Forest / Tree Cover (%)</option>
+          <option value="pct_cropland">Cropland / Agriculture (%)</option>
+          <option value="pct_water">Water Bodies (%)</option>
+          <option value="pct_shrub_tea">Tea & Shrubland (%)</option>
+          <option value="pct_builtup">Built-up Settlements (%)</option>
+        </select>
+      </div>
     </div>
 
     <a href="three_view.html" class="btn-3d">Switch to 3D Extruded Model &rarr;</a>
@@ -169,25 +188,23 @@
       <div id="stat-list" style="margin-top: 10px;"></div>
     </div>
 
-    <!-- Map Color Legend -->
+    <!-- Legend -->
     <div class="card">
-      <h3>Classification Key (Dominant Color)</h3>
-      <div style="display: grid; grid-template-columns: 1fr 1fr; gap: 6px; margin-top: 6px;">
+      <h3 id="legend-title">Classification Key</h3>
+      <div id="legend-container" style="display: grid; grid-template-columns: 1fr 1fr; gap: 6px; margin-top: 6px;">
         <div class="stat-tag"><span class="stat-pill" style="background: #1b7837;"></span> <span style="font-size:0.75rem;">Forest Cover</span></div>
         <div class="stat-tag"><span class="stat-pill" style="background: #78c679;"></span> <span style="font-size:0.75rem;">Shrub / Tea</span></div>
         <div class="stat-tag"><span class="stat-pill" style="background: #fecc5c;"></span> <span style="font-size:0.75rem;">Cropland</span></div>
         <div class="stat-tag"><span class="stat-pill" style="background: #2b83ba;"></span> <span style="font-size:0.75rem;">Water Bodies</span></div>
-        <div class="stat-tag"><span class="stat-pill" style="background: #e31a1c;"></span> <span style="font-size:0.75rem;">Built-up</span></div>
+        <div class="stat-tag"><span class="stat-pill" style="background: #e31a1c;"></span> <span style="font-size:0.75rem;">Built-up Area</span></div>
         <div class="stat-tag"><span class="stat-pill" style="background: #d95f0e;"></span> <span style="font-size:0.75rem;">Barren / Chars</span></div>
       </div>
     </div>
   </div>
 
-  <!-- Leaflet JS -->
   <script src="https://unpkg.com/leaflet@1.9.4/dist/leaflet.js"></script>
 
   <script>
-    // Initialize Leaflet Map
     const map = L.map('map', {
       center: [26.2006, 92.9376],
       zoom: window.innerWidth < 768 ? 7 : 8,
@@ -203,6 +220,9 @@
     let districtLayer = null;
     let chartInstance = null;
     let selectedLayer = null;
+    let geojsonData = null;
+    let districtLookup = {};
+    let currentTheme = 'dominant';
 
     const classes = [
       { key: 'pct_forest', label: 'Forest / Tree Cover', color: '#1b7837' },
@@ -212,6 +232,40 @@
       { key: 'pct_builtup', label: 'Built-up / Urban', color: '#e31a1c' },
       { key: 'pct_barren', label: 'Barren / River Chars', color: '#d95f0e' }
     ];
+
+    // Color ramp generator for single-metric view
+    function getMetricColor(value, theme) {
+      const v = parseFloat(value || 0);
+      if (theme === 'pct_forest') {
+        return v > 50 ? '#00441b' : v > 35 ? '#1b7837' : v > 20 ? '#78c679' : v > 10 ? '#c2e699' : '#f7fcf5';
+      } else if (theme === 'pct_cropland') {
+        return v > 50 ? '#b35806' : v > 35 ? '#f1a340' : v > 20 ? '#fee08b' : v > 10 ? '#d8daeb' : '#f7f7f7';
+      } else if (theme === 'pct_water') {
+        return v > 20 ? '#08306b' : v > 12 ? '#2171b5' : v > 6 ? '#6baed6' : v > 2 ? '#c6dbef' : '#f7fbff';
+      } else if (theme === 'pct_builtup') {
+        return v > 15 ? '#67000d' : v > 10 ? '#cb181d' : v > 5 ? '#fb6a4a' : v > 2 ? '#fcae91' : '#fff5f0';
+      } else {
+        return v > 25 ? '#006d2c' : v > 15 ? '#31a354' : v > 8 ? '#74c476' : '#edf8e9';
+      }
+    }
+
+    function getDistrictStyle(feature) {
+      let fillColor;
+      if (currentTheme === 'dominant') {
+        fillColor = feature.properties?.dominant_color || '#38bdf8';
+      } else {
+        fillColor = getMetricColor(feature.properties?.[currentTheme], currentTheme);
+      }
+
+      return {
+        fillColor: fillColor,
+        weight: 1.5,
+        opacity: 0.9,
+        color: '#ffffff',
+        dashArray: '2',
+        fillOpacity: currentTheme === 'dominant' ? 0.45 : 0.65
+      };
+    }
 
     function updateDetails(name, properties) {
       document.getElementById('district-name').innerText = name;
@@ -241,7 +295,6 @@
 
       document.getElementById('stat-list').innerHTML = statListHtml;
 
-      // Update Chart.js Instance
       const ctx = document.getElementById('lulcChart').getContext('2d');
       if (chartInstance) chartInstance.destroy();
 
@@ -265,20 +318,28 @@
       });
     }
 
-    // Dynamic style based on dominant land cover class
-    function getDistrictStyle(feature) {
-      const dominantColor = feature.properties?.dominant_color || '#38bdf8';
-      return {
-        fillColor: dominantColor,
-        weight: 1.5,
-        opacity: 0.9,
-        color: '#ffffff',
-        dashArray: '2',
-        fillOpacity: 0.45
-      };
+    function highlightDistrict(layer, feature) {
+      if (selectedLayer) districtLayer.resetStyle(selectedLayer);
+      selectedLayer = layer;
+      selectedLayer.setStyle({ weight: 3, color: '#fbbf24', fillOpacity: 0.85 });
+      selectedLayer.bringToFront();
+
+      const paddingBottom = window.innerWidth < 768 ? 220 : 40;
+      map.fitBounds(layer.getBounds(), {
+        paddingTopLeft: [20, 20],
+        paddingBottomRight: [20, paddingBottom]
+      });
+
+      const props = feature.properties || {};
+      const dName = props.name || props.DISTRICT || props.district || "Assam District";
+      updateDetails(dName, props);
     }
 
     function onEachFeature(feature, layer) {
+      const props = feature.properties || {};
+      const dName = props.name || props.DISTRICT || props.district || "Assam District";
+      districtLookup[dName.toLowerCase()] = { layer, feature };
+
       layer.on({
         mouseover: (e) => {
           if (window.innerWidth >= 768) {
@@ -289,46 +350,64 @@
         mouseout: (e) => {
           if (window.innerWidth >= 768) {
             districtLayer.resetStyle(e.target);
-            if (selectedLayer) selectedLayer.setStyle({ weight: 3, color: '#fbbf24', fillOpacity: 0.75 });
+            if (selectedLayer) selectedLayer.setStyle({ weight: 3, color: '#fbbf24', fillOpacity: 0.85 });
           }
         },
         click: (e) => {
-          if (selectedLayer) districtLayer.resetStyle(selectedLayer);
-          selectedLayer = e.target;
-          selectedLayer.setStyle({ weight: 3, color: '#fbbf24', fillOpacity: 0.75 });
-          selectedLayer.bringToFront();
-
-          // Responsive map bounds padding
-          const paddingBottom = window.innerWidth < 768 ? 220 : 40;
-          map.fitBounds(e.target.getBounds(), {
-            paddingTopLeft: [20, 20],
-            paddingBottomRight: [20, paddingBottom]
-          });
-
-          const props = feature.properties || {};
-          const dName = props.name || props.DISTRICT || props.district || "Assam District";
-          updateDetails(dName, props);
+          highlightDistrict(e.target, feature);
         }
       });
     }
 
-    // Load GeoJSON dataset from repository
+    // Load GeoJSON Dataset
     fetch('assam_districts.geojson.json')
       .then(res => res.json())
       .then(data => {
+        geojsonData = data;
+        const datalist = document.getElementById('district-list');
+
+        // Populate search datalist
+        data.features.forEach(f => {
+          const name = f.properties?.name || f.properties?.DISTRICT || f.properties?.district;
+          if (name) {
+            const opt = document.createElement('option');
+            opt.value = name;
+            datalist.appendChild(opt);
+          }
+        });
+
         districtLayer = L.geoJSON(data, {
           style: getDistrictStyle,
           onEachFeature: onEachFeature
         }).addTo(map);
 
-        // Preload the first district
-        if (data.features && data.features.length > 0) {
+        // Preload first district
+        if (data.features.length > 0) {
           const first = data.features[0];
           const firstName = first.properties?.name || "Assam District";
           updateDetails(firstName, first.properties);
         }
       })
-      .catch(err => console.error("Error loading district GeoJSON:", err));
+      .catch(err => console.error("Error loading GeoJSON:", err));
+
+    // Search bar handler
+    document.getElementById('district-search').addEventListener('change', (e) => {
+      const query = e.target.value.trim().toLowerCase();
+      if (districtLookup[query]) {
+        highlightDistrict(districtLookup[query].layer, districtLookup[query].feature);
+      }
+    });
+
+    // Theme filter handler
+    document.getElementById('theme-filter').addEventListener('change', (e) => {
+      currentTheme = e.target.value;
+      if (districtLayer) {
+        districtLayer.setStyle(getDistrictStyle);
+      }
+      if (selectedLayer) {
+        selectedLayer.setStyle({ weight: 3, color: '#fbbf24', fillOpacity: 0.85 });
+      }
+    });
   </script>
 </body>
 </html>
