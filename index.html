@@ -17,7 +17,7 @@
       font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, sans-serif;
       height: 100vh;
       width: 100vw;
-      background: #050811;
+      background: #040711;
       color: #f1f5f9;
       overflow: hidden;
       display: flex;
@@ -34,9 +34,9 @@
     #sidebar {
       width: 440px;
       height: 100%;
-      background: rgba(9, 14, 26, 0.96);
+      background: rgba(8, 12, 24, 0.96);
       backdrop-filter: blur(16px);
-      padding: 22px;
+      padding: 20px;
       display: flex;
       flex-direction: column;
       gap: 12px;
@@ -46,14 +46,14 @@
       box-shadow: -10px 0 36px rgba(0, 0, 0, 0.75);
     }
 
-    h2 { font-size: 1.3rem; font-weight: 700; color: #38bdf8; letter-spacing: -0.02em; }
+    h2 { font-size: 1.25rem; font-weight: 700; color: #38bdf8; letter-spacing: -0.02em; }
     p.subtext { font-size: 0.78rem; color: #94a3b8; }
 
     .card {
-      background: #111a2e;
+      background: #0f172a;
       border-radius: 10px;
-      padding: 14px 16px;
-      border: 1px solid #1e2c4a;
+      padding: 13px 15px;
+      border: 1px solid #1e293b;
     }
 
     .card h3 { 
@@ -81,10 +81,10 @@
     /* Segmented View Mode Tabs */
     .view-mode-tabs {
       display: flex;
-      background: #070c18;
+      background: #060a14;
       padding: 4px;
       border-radius: 8px;
-      border: 1px solid #1e2c4a;
+      border: 1px solid #1e293b;
       gap: 4px;
     }
 
@@ -105,14 +105,22 @@
     .tab-btn.active {
       background: #0284c7;
       color: #ffffff;
-      box-shadow: 0 2px 12px rgba(2, 132, 199, 0.55);
+      box-shadow: 0 2px 10px rgba(2, 132, 199, 0.5);
     }
 
-    /* Controls */
+    /* Form Controls */
+    .input-label {
+      font-size: 0.75rem;
+      color: #94a3b8;
+      display: block;
+      margin-bottom: 4px;
+      font-weight: 500;
+    }
+
     select {
       width: 100%;
-      background: #070c18;
-      border: 1px solid #1e2c4a;
+      background: #060a14;
+      border: 1px solid #1e293b;
       color: #f8fafc;
       padding: 9px 12px;
       border-radius: 6px;
@@ -131,7 +139,7 @@
       color: #94a3b8;
     }
     input[type="range"] {
-      accent-color: #00e5ff;
+      accent-color: #38bdf8;
       cursor: pointer;
     }
 
@@ -140,13 +148,13 @@
       display: flex;
       justify-content: space-between;
       align-items: center;
-      padding: 6px 0;
-      border-bottom: 1px solid #1a253d;
-      font-size: 0.82rem;
+      padding: 5px 0;
+      border-bottom: 1px solid #1e293b;
+      font-size: 0.8rem;
     }
     .stat-row:last-child { border-bottom: none; }
     .stat-tag { display: flex; align-items: center; gap: 8px; }
-    .stat-pill { width: 12px; height: 12px; border-radius: 3px; flex-shrink: 0; box-shadow: 0 0 6px rgba(0,0,0,0.4); }
+    .stat-pill { width: 12px; height: 12px; border-radius: 3px; flex-shrink: 0; box-shadow: 0 0 4px rgba(0,0,0,0.5); }
     .stat-val { font-weight: 700; color: #f8fafc; font-feature-settings: "tnum"; }
 
     .btn-3d {
@@ -172,7 +180,7 @@
       margin: 0 auto 8px auto;
     }
 
-    /* Mobile */
+    /* Mobile (<768px) */
     @media (max-width: 768px) {
       body { flex-direction: column; }
       #map { position: absolute; top: 0; left: 0; right: 0; bottom: 0; }
@@ -180,7 +188,7 @@
         position: absolute; bottom: 0; left: 0; width: 100%; max-height: 54vh;
         border-left: none; border-top: 2px solid rgba(56, 189, 248, 0.4);
         border-top-left-radius: 18px; border-top-right-radius: 18px;
-        box-shadow: 0 -8px 28px rgba(0, 0, 0, 0.8); padding: 14px 16px 28px 16px;
+        box-shadow: 0 -8px 28px rgba(0, 0, 0, 0.85); padding: 12px 16px 26px 16px;
       }
       .drawer-handle { display: block; }
       h2 { font-size: 1.1rem; }
@@ -206,9 +214,21 @@
       <button class="tab-btn" id="tab-focus-district">Focus District</button>
     </div>
 
+    <!-- Color Ramp Selector -->
+    <div class="card">
+      <label class="input-label" for="ramp-select">🎨 Select Color Ramp / Palette:</label>
+      <select id="ramp-select">
+        <option value="cyberpunk" selected>⚡ Cyberpunk Neon (Maximum Contrast)</option>
+        <option value="dynamic_world">🌍 ESA / Dynamic World Standard</option>
+        <option value="spectral">🌈 Spectral / Thermal Gradient</option>
+        <option value="viridis">🧪 Viridis Scientific</option>
+        <option value="turbo">🔥 Turbo High-Vibrancy</option>
+      </select>
+    </div>
+
     <!-- District Selection Dropdown -->
-    <div class="card" id="district-selector-card">
-      <label style="font-size: 0.75rem; color: #94a3b8; display: block; margin-bottom: 4px;">Choose District to Inspect:</label>
+    <div class="card">
+      <label class="input-label" for="district-dropdown">Choose District to Inspect:</label>
       <select id="district-dropdown">
         <option value="">-- Select a District --</option>
       </select>
@@ -235,24 +255,17 @@
       </h3>
       <p id="panel-meta" class="subtext">Aggregated LULC distribution across all districts</p>
       
-      <div style="margin-top: 8px; height: 165px; position: relative;">
+      <div style="margin-top: 8px; height: 160px; position: relative;">
         <canvas id="lulcChart"></canvas>
       </div>
 
       <div id="stat-list" style="margin-top: 10px;"></div>
     </div>
 
-    <!-- Vibrant Classification Legend -->
+    <!-- Legend -->
     <div class="card">
-      <h3>Spectral Classification Key</h3>
-      <div style="display: grid; grid-template-columns: 1fr 1fr; gap: 8px; margin-top: 6px;">
-        <div class="stat-tag"><span class="stat-pill" style="background: #00e676;"></span> <span style="font-size:0.75rem;">Dense Forest Canopy</span></div>
-        <div class="stat-tag"><span class="stat-pill" style="background: #aeea00;"></span> <span style="font-size:0.75rem;">Tea & Agroforestry</span></div>
-        <div class="stat-tag"><span class="stat-pill" style="background: #ffd600;"></span> <span style="font-size:0.75rem;">Cropland / Agri</span></div>
-        <div class="stat-tag"><span class="stat-pill" style="background: #00e5ff;"></span> <span style="font-size:0.75rem;">Water (Rivers/Beels)</span></div>
-        <div class="stat-tag"><span class="stat-pill" style="background: #ff1744;"></span> <span style="font-size:0.75rem;">Urban / Built-up</span></div>
-        <div class="stat-tag"><span class="stat-pill" style="background: #ff6d00;"></span> <span style="font-size:0.75rem;">Chars / River Sandbars</span></div>
-      </div>
+      <h3>Active Palette Legend</h3>
+      <div id="legend-items" style="display: grid; grid-template-columns: 1fr 1fr; gap: 8px; margin-top: 6px;"></div>
     </div>
   </div>
 
@@ -278,32 +291,78 @@
     let activeMode = 'state'; // 'state', 'all', 'focus'
     let selectedDistrictName = null;
     let globalOpacity = 0.70;
+    let activePaletteKey = 'cyberpunk';
 
-    // High-Vibrancy Core Spectral Anchors (RGB arrays for interpolation)
-    const spectralAnchors = [
-      { key: 'pct_forest', label: 'Dense Forest / Canopy', hex: '#00e676', rgb: [0, 230, 118] },
-      { key: 'pct_shrub_tea', label: 'Tea Estates & Agro', hex: '#aeea00', rgb: [174, 234, 0] },
-      { key: 'pct_cropland', label: 'Cropland / Agriculture', hex: '#ffd600', rgb: [255, 214, 0] },
-      { key: 'pct_water', label: 'Water (Rivers/Beels)', hex: '#00e5ff', rgb: [0, 229, 255] },
-      { key: 'pct_builtup', label: 'Built-up Settlements', hex: '#ff1744', rgb: [255, 23, 68] },
-      { key: 'pct_barren', label: 'River Chars & Sandbars', hex: '#ff6d00', rgb: [255, 109, 0] }
-    ];
+    // 5 Differential Color Ramps with exact RGB vectors
+    const COLOR_RAMPS = {
+      cyberpunk: {
+        name: "Cyberpunk Neon",
+        pct_forest:    { label: "Dense Forest Canopy",  hex: "#00e676", rgb: [0, 230, 118] },
+        pct_shrub_tea: { label: "Tea Estates & Shrub",  hex: "#aeea00", rgb: [174, 234, 0] },
+        pct_cropland:  { label: "Cropland / Agri",      hex: "#ffd600", rgb: [255, 214, 0] },
+        pct_water:     { label: "Water (Rivers/Beels)", hex: "#00e5ff", rgb: [0, 229, 255] },
+        pct_builtup:   { label: "Urban / Built-up",     hex: "#ff1744", rgb: [255, 23, 68] },
+        pct_barren:    { label: "Chars & Sandbars",     hex: "#ff6d00", rgb: [255, 109, 0] }
+      },
+      dynamic_world: {
+        name: "ESA Dynamic World",
+        pct_forest:    { label: "Dense Forest Canopy",  hex: "#397d49", rgb: [57, 125, 73] },
+        pct_shrub_tea: { label: "Tea Estates & Shrub",  hex: "#88b053", rgb: [136, 176, 83] },
+        pct_cropland:  { label: "Cropland / Agri",      hex: "#e49635", rgb: [228, 150, 53] },
+        pct_water:     { label: "Water (Rivers/Beels)", hex: "#419bdf", rgb: [65, 155, 223] },
+        pct_builtup:   { label: "Urban / Built-up",     hex: "#c4281b", rgb: [196, 40, 27] },
+        pct_barren:    { label: "Chars & Sandbars",     hex: "#a59b8f", rgb: [165, 155, 143] }
+      },
+      spectral: {
+        name: "Spectral / Thermal",
+        pct_forest:    { label: "Dense Forest Canopy",  hex: "#2b83ba", rgb: [43, 131, 186] },
+        pct_shrub_tea: { label: "Tea Estates & Shrub",  hex: "#abdda4", rgb: [171, 221, 164] },
+        pct_cropland:  { label: "Cropland / Agri",      hex: "#ffffbf", rgb: [255, 255, 191] },
+        pct_water:     { label: "Water (Rivers/Beels)", hex: "#5e4fa2", rgb: [94, 79, 162] },
+        pct_builtup:   { label: "Urban / Built-up",     hex: "#d7191c", rgb: [215, 25, 28] },
+        pct_barren:    { label: "Chars & Sandbars",     hex: "#fdae61", rgb: [253, 174, 97] }
+      },
+      viridis: {
+        name: "Viridis Scientific",
+        pct_forest:    { label: "Dense Forest Canopy",  hex: "#440154", rgb: [68, 1, 84] },
+        pct_shrub_tea: { label: "Tea Estates & Shrub",  hex: "#3b528b", rgb: [59, 82, 139] },
+        pct_cropland:  { label: "Cropland / Agri",      hex: "#21918c", rgb: [33, 145, 140] },
+        pct_water:     { label: "Water (Rivers/Beels)", hex: "#5ec962", rgb: [94, 201, 98] },
+        pct_builtup:   { label: "Urban / Built-up",     hex: "#fde725", rgb: [253, 231, 37] },
+        pct_barren:    { label: "Chars & Sandbars",     hex: "#8fd744", rgb: [143, 215, 68] }
+      },
+      turbo: {
+        name: "Turbo Vibrant",
+        pct_forest:    { label: "Dense Forest Canopy",  hex: "#238823", rgb: [35, 136, 35] },
+        pct_shrub_tea: { label: "Tea Estates & Shrub",  hex: "#00d084", rgb: [0, 208, 132] },
+        pct_cropland:  { label: "Cropland / Agri",      hex: "#ffb703", rgb: [255, 183, 3] },
+        pct_water:     { label: "Water (Rivers/Beels)", hex: "#0077b6", rgb: [0, 119, 182] },
+        pct_builtup:   { label: "Urban / Built-up",     hex: "#d90429", rgb: [217, 4, 41] },
+        pct_barren:    { label: "Chars & Sandbars",     hex: "#fb8500", rgb: [251, 133, 0] }
+      }
+    };
 
-    // Compute unique weighted spectral color blending for each district
+    function getActivePalette() {
+      return COLOR_RAMPS[activePaletteKey];
+    }
+
+    // Blend RGB based on exact district class percentages
     function computeDynamicDistrictColor(p) {
+      const palette = getActivePalette();
       let r = 0, g = 0, b = 0, totalWeight = 0;
 
-      spectralAnchors.forEach(cls => {
-        const pct = parseFloat(p[cls.key] || 0);
-        // Exponent weighting amplifies distinct features (e.g. tea, built-up, water)
-        const weight = Math.pow(pct, 1.35); 
+      Object.keys(palette).forEach(key => {
+        if (key === 'name') return;
+        const cls = palette[key];
+        const pct = parseFloat(p[key] || 0);
+        const weight = Math.pow(pct, 1.35); // Accentuate dominant land use
         r += cls.rgb[0] * weight;
         g += cls.rgb[1] * weight;
         b += cls.rgb[2] * weight;
         totalWeight += weight;
       });
 
-      if (totalWeight === 0) return '#ffd600';
+      if (totalWeight === 0) return palette.pct_cropland.hex;
       r = Math.round(Math.min(255, r / totalWeight));
       g = Math.round(Math.min(255, g / totalWeight));
       b = Math.round(Math.min(255, b / totalWeight));
@@ -312,16 +371,19 @@
     }
 
     function getDistrictDominantClass(p) {
+      const palette = getActivePalette();
       let maxVal = -1;
-      let dominant = spectralAnchors[0];
-      spectralAnchors.forEach(c => {
-        const val = parseFloat(p[c.key] || 0);
+      let dominantKey = 'pct_forest';
+
+      Object.keys(palette).forEach(key => {
+        if (key === 'name') return;
+        const val = parseFloat(p[key] || 0);
         if (val > maxVal) {
           maxVal = val;
-          dominant = c;
+          dominantKey = key;
         }
       });
-      return dominant;
+      return palette[dominantKey];
     }
 
     function getFeatureStyle(feature) {
@@ -331,7 +393,6 @@
       const dynamicColor = computeDynamicDistrictColor(p);
 
       if (activeMode === 'state') {
-        // Mode 1: State View - Harmonized Macro Choropleth
         return {
           fillColor: dynamicColor,
           weight: 1.4,
@@ -341,7 +402,6 @@
           fillOpacity: globalOpacity * 0.85
         };
       } else if (activeMode === 'all') {
-        // Mode 2: All Districts - Vibrant Contrast, Crisp White Borders
         return {
           fillColor: dynamicColor,
           weight: isSelected ? 4 : 1.8,
@@ -351,13 +411,13 @@
           fillOpacity: isSelected ? Math.min(1.0, globalOpacity + 0.25) : globalOpacity
         };
       } else {
-        // Mode 3: Focus District - Selected pops vividly; ALL OTHER DISTRICTS REMAIN VISIBLE
+        // Focus Mode: Highlighted target + visible translucent boundaries for surrounding districts
         if (isSelected) {
           return {
             fillColor: dynamicColor,
             weight: 4,
             opacity: 1,
-            color: '#00e5ff', // Glowing Cyan Tactical Outline
+            color: '#00e5ff',
             dashArray: '',
             fillOpacity: Math.min(1.0, globalOpacity + 0.3)
           };
@@ -366,19 +426,37 @@
             fillColor: dynamicColor,
             weight: 1.2,
             opacity: 0.5,
-            color: '#94a3b8', // Subtle tactical borders kept active
+            color: '#94a3b8',
             dashArray: '3',
-            fillOpacity: 0.15 // Ghost fill preserves regional geography
+            fillOpacity: 0.15
           };
         }
       }
+    }
+
+    function updateLegend() {
+      const palette = getActivePalette();
+      let html = '';
+      Object.keys(palette).forEach(k => {
+        if (k === 'name') return;
+        const item = palette[k];
+        html += `
+          <div class="stat-tag">
+            <span class="stat-pill" style="background: ${item.hex};"></span>
+            <span style="font-size:0.75rem;">${item.label}</span>
+          </div>
+        `;
+      });
+      document.getElementById('legend-items').innerHTML = html;
     }
 
     function updateMetricsPanel(title, subtitle, properties, isStatewide = false) {
       document.getElementById('panel-title').innerText = title;
       document.getElementById('panel-meta').innerText = subtitle;
 
+      const palette = getActivePalette();
       const badge = document.getElementById('dominant-badge');
+
       if (isStatewide) {
         badge.innerText = 'Statewide';
         badge.style.background = '#0284c7';
@@ -393,8 +471,10 @@
       const colors = [];
       let statListHtml = '';
 
-      spectralAnchors.forEach(c => {
-        const val = parseFloat(properties[c.key] ?? 0);
+      Object.keys(palette).forEach(k => {
+        if (k === 'name') return;
+        const c = palette[k];
+        const val = parseFloat(properties[k] ?? 0);
         values.push(val);
         labels.push(c.label);
         colors.push(c.hex);
@@ -438,19 +518,20 @@
 
     function computeStatewideAverages() {
       if (!geojsonData) return;
+      const palette = getActivePalette();
       const stateTotals = {};
-      spectralAnchors.forEach(c => stateTotals[c.key] = 0);
+      Object.keys(palette).forEach(k => { if (k !== 'name') stateTotals[k] = 0; });
       const totalDistricts = geojsonData.features.length;
 
       geojsonData.features.forEach(f => {
-        spectralAnchors.forEach(c => {
-          stateTotals[c.key] += parseFloat(f.properties[c.key] || 0);
+        Object.keys(palette).forEach(k => {
+          if (k !== 'name') stateTotals[k] += parseFloat(f.properties[k] || 0);
         });
       });
 
       const stateAverages = {};
-      spectralAnchors.forEach(c => {
-        stateAverages[c.key] = (stateTotals[c.key] / totalDistricts).toFixed(2);
+      Object.keys(palette).forEach(k => {
+        if (k !== 'name') stateAverages[k] = (stateTotals[k] / totalDistricts).toFixed(2);
       });
 
       updateMetricsPanel("State of Assam", "Aggregated State-wide Coverage Ratios", stateAverages, true);
@@ -553,9 +634,24 @@
           onEachFeature: onEachFeature
         }).addTo(map);
 
+        updateLegend();
         computeStatewideAverages();
       })
       .catch(err => console.error("Error loading GeoJSON:", err));
+
+    // Color Ramp Change Event Listener
+    document.getElementById('ramp-select').addEventListener('change', (e) => {
+      activePaletteKey = e.target.value;
+      updateLegend();
+      if (districtLayer) districtLayer.setStyle(getFeatureStyle);
+
+      if (activeMode === 'state' || !selectedDistrictName) {
+        computeStatewideAverages();
+      } else {
+        const item = districtLookup[selectedDistrictName];
+        if (item) updateMetricsPanel(selectedDistrictName, "District LULC Coverage Distribution", item.feature.properties, false);
+      }
+    });
 
     // Tab Listeners
     document.getElementById('tab-state').addEventListener('click', () => setMode('state'));
