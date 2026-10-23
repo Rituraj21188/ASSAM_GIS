@@ -47,8 +47,34 @@
       box-shadow: -10px 0 36px rgba(0, 0, 0, 0.75);
     }
 
+    .header-box {
+      display: flex;
+      justify-content: space-between;
+      align-items: flex-start;
+    }
+
     h2 { font-size: 1.25rem; font-weight: 700; color: #38bdf8; letter-spacing: -0.02em; }
     p.subtext { font-size: 0.78rem; color: #94a3b8; }
+
+    .btn-info {
+      background: #1e293b;
+      border: 1px solid #38bdf8;
+      color: #38bdf8;
+      border-radius: 50%;
+      width: 28px;
+      height: 28px;
+      font-weight: 700;
+      font-size: 0.85rem;
+      cursor: pointer;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      transition: all 0.2s;
+    }
+    .btn-info:hover {
+      background: #0284c7;
+      color: #ffffff;
+    }
 
     .card {
       background: #0f172a;
@@ -156,18 +182,6 @@
     .stat-pill { width: 12px; height: 12px; border-radius: 3px; flex-shrink: 0; box-shadow: 0 0 4px rgba(0,0,0,0.5); }
     .stat-val { font-weight: 700; color: #f8fafc; font-feature-settings: "tnum"; }
 
-    /* LULC Description Explainer */
-    .lulc-explainer-item {
-      margin-bottom: 8px;
-      font-size: 0.76rem;
-      line-height: 1.35;
-      color: #cbd5e1;
-    }
-    .lulc-explainer-item strong {
-      color: #f8fafc;
-    }
-    .lulc-explainer-item:last-child { margin-bottom: 0; }
-
     .btn-3d {
       display: block;
       text-align: center;
@@ -181,6 +195,68 @@
       transition: opacity 0.2s;
     }
     .btn-3d:hover { opacity: 0.9; }
+
+    /* Map Custom Reset Control */
+    .leaflet-control-reset {
+      background: #0f172a;
+      border: 1px solid #38bdf8;
+      color: #ffffff;
+      padding: 6px 10px;
+      font-size: 0.75rem;
+      font-weight: 600;
+      border-radius: 4px;
+      cursor: pointer;
+      box-shadow: 0 2px 8px rgba(0,0,0,0.5);
+    }
+    .leaflet-control-reset:hover {
+      background: #0284c7;
+    }
+
+    /* About Modal */
+    #info-modal {
+      display: none;
+      position: fixed;
+      inset: 0;
+      background: rgba(0, 0, 0, 0.75);
+      backdrop-filter: blur(8px);
+      z-index: 2000;
+      align-items: center;
+      justify-content: center;
+      padding: 20px;
+    }
+
+    .modal-content {
+      background: #0f172a;
+      border: 1px solid #334155;
+      border-radius: 12px;
+      max-width: 580px;
+      width: 100%;
+      padding: 24px;
+      box-shadow: 0 20px 40px rgba(0,0,0,0.8);
+      position: relative;
+      max-height: 85vh;
+      overflow-y: auto;
+    }
+
+    .modal-close {
+      position: absolute;
+      top: 16px;
+      right: 16px;
+      background: #1e293b;
+      border: none;
+      color: #94a3b8;
+      width: 30px;
+      height: 30px;
+      border-radius: 6px;
+      font-size: 1.1rem;
+      cursor: pointer;
+    }
+    .modal-close:hover { color: #fff; background: #334155; }
+
+    .modal-content h3 { font-size: 1.15rem; color: #38bdf8; margin-bottom: 12px; }
+    .modal-content p { font-size: 0.84rem; line-height: 1.5; color: #cbd5e1; margin-bottom: 12px; }
+    .modal-section { background: #1e293b; padding: 12px; border-radius: 6px; margin-bottom: 10px; }
+    .modal-section strong { color: #f8fafc; }
 
     .drawer-handle {
       display: none;
@@ -213,9 +289,12 @@
   <div id="sidebar">
     <div class="drawer-handle"></div>
 
-    <div>
-      <h2>Assam 2026 LULC Explorer</h2>
-      <p class="subtext">Multi-Scale Earth Observation & District Spatial Analytics</p>
+    <div class="header-box">
+      <div>
+        <h2>Assam 2026 LULC Explorer</h2>
+        <p class="subtext">Multi-Scale Earth Observation & District Spatial Analytics</p>
+      </div>
+      <button class="btn-info" id="open-info-modal" title="About LULC">i</button>
     </div>
 
     <!-- Mode Selector Tabs -->
@@ -278,27 +357,28 @@
       <h3>Active Palette Legend</h3>
       <div id="legend-items" style="display: grid; grid-template-columns: 1fr 1fr; gap: 8px; margin-top: 6px;"></div>
     </div>
+  </div>
 
-    <!-- Brief LULC Classification Details -->
-    <div class="card">
-      <h3>Terrain Classification Guide</h3>
-      <div class="lulc-explainer-item">
-        <strong>🌲 Dense Forest / Canopy:</strong> Evergreen and semi-evergreen reserves, national parks (Kaziranga, Manas, Dibru-Saikhowa), and hill tract biomass.
+  <!-- About LULC Modal -->
+  <div id="info-modal">
+    <div class="modal-content">
+      <button class="modal-close" id="close-info-modal">&times;</button>
+      <h3>Understanding Land Use & Land Cover (LULC)</h3>
+      <p>LULC provides the spatial baseline for environmental monitoring, agriculture, and water resource governance across the Brahmaputra and Barak river basins.</p>
+
+      <div class="modal-section">
+        <strong>1. Land Cover (Biophysical Nature):</strong>
+        <p style="margin: 4px 0 0 0; font-size: 0.8rem; color: #94a3b8;">Refers to what is physically present on the surface observed by Earth observation satellites and UAVs (e.g., dense canopy, open water, sandbars, concrete).</p>
       </div>
-      <div class="lulc-explainer-item">
-        <strong>🍃 Tea Estates & Agro:</strong> Organized tea plantation estates across Upper Assam and North Bank agroforestry belts.
+
+      <div class="modal-section">
+        <strong>2. Land Use (Anthropogenic Function):</strong>
+        <p style="margin: 4px 0 0 0; font-size: 0.8rem; color: #94a3b8;">Refers to how humans manage and exploit that land cover for economic and living purposes (e.g., tea estates, paddy cultivation, protected biosphere reserves).</p>
       </div>
-      <div class="lulc-explainer-item">
-        <strong>🌾 Cropland / Agri:</strong> Paddy fields (Sali, Ahu, Boro), flood-receding agriculture, and fertile alluvial plain croplands.
-      </div>
-      <div class="lulc-explainer-item">
-        <strong>🌊 Water Bodies:</strong> Main Brahmaputra & Barak river channels, perennial tributaries, oxbow lakes (beels), and wetlands.
-      </div>
-      <div class="lulc-explainer-item">
-        <strong>🏢 Urban / Built-up:</strong> Municipal infrastructure, rural settlements, commercial hubs (Guwahati, Dibrugarh, Jorhat, Silchar).
-      </div>
-      <div class="lulc-explainer-item">
-        <strong>🏖️ Chars & River Sandbars:</strong> Active alluvial sandbars, seasonal river islands, and erosion-prone deposition stretches.
+
+      <div class="modal-section">
+        <strong>Why It Matters in Assam:</strong>
+        <p style="margin: 4px 0 0 0; font-size: 0.8rem; color: #94a3b8;">Differentiating cropland from active river chars and tracking seasonal wetland dynamics helps authorities plan flood risk buffers, monitor agricultural yields, and preserve critical wildlife corridors.</p>
       </div>
     </div>
   </div>
@@ -306,19 +386,19 @@
   <script src="https://unpkg.com/leaflet@1.9.4/dist/leaflet.js"></script>
 
   <script>
-    // 1. BOUNDING BOX LOCKDOWN: Restrict view strictly to Assam and immediate buffer
+    // 1. BOUNDING BOX LOCKDOWN: Restricts pan/zoom strictly to Assam and immediate Northeast buffer
     const assamBounds = L.latLngBounds(
-      L.latLng(23.5, 89.0), // Southwest bound (Meghalaya/Bangladesh border buffer)
-      L.latLng(28.8, 96.8)  // Northeast bound (Arunachal/Upper Assam border buffer)
+      L.latLng(23.5, 89.0),
+      L.latLng(28.8, 96.8)
     );
 
     const map = L.map('map', {
       center: [26.2006, 92.9376],
       zoom: window.innerWidth < 768 ? 7 : 8,
-      minZoom: 7,                  // Stops zoom-out beyond Northeast India
-      maxZoom: 18,                 // Allows deep satellite inspection
-      maxBounds: assamBounds,      // Bounding box lock
-      maxBoundsViscosity: 1.0,     // Bounces camera back if user attempts to pan away
+      minZoom: 7,
+      maxZoom: 18,
+      maxBounds: assamBounds,
+      maxBoundsViscosity: 1.0,
       zoomControl: true
     });
 
@@ -327,6 +407,22 @@
       maxZoom: 20,
       attribution: 'Map &copy; Google'
     }).addTo(map);
+
+    // Custom Reset State View Button Control
+    const ResetControl = L.Control.extend({
+      options: { position: 'topleft' },
+      onAdd: function() {
+        const btn = L.DomUtil.create('button', 'leaflet-control-reset');
+        btn.innerHTML = '↺ Reset View';
+        btn.title = 'Reset to Full State View';
+        L.DomEvent.disableClickPropagation(btn);
+        btn.onclick = function() {
+          setMode('state');
+        };
+        return btn;
+      }
+    });
+    map.addControl(new ResetControl());
 
     let districtLayer = null;
     let chartInstance = null;
@@ -713,6 +809,18 @@
       globalOpacity = parseFloat(e.target.value);
       document.getElementById('opacity-val').innerText = `${Math.round(globalOpacity * 100)}%`;
       if (districtLayer) districtLayer.setStyle(getFeatureStyle);
+    });
+
+    // Modal Control Listeners
+    const modal = document.getElementById('info-modal');
+    document.getElementById('open-info-modal').addEventListener('click', () => {
+      modal.style.display = 'flex';
+    });
+    document.getElementById('close-info-modal').addEventListener('click', () => {
+      modal.style.display = 'none';
+    });
+    window.addEventListener('click', (e) => {
+      if (e.target === modal) modal.style.display = 'none';
     });
   </script>
 </body>
