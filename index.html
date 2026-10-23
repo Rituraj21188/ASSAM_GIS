@@ -17,7 +17,7 @@
       font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, sans-serif;
       height: 100vh;
       width: 100vw;
-      background: #0b0f17;
+      background: #090d16;
       color: #e2e8f0;
       overflow: hidden;
       display: flex;
@@ -30,39 +30,65 @@
       z-index: 1;
     }
 
-    /* Desktop Sidebar */
+    /* Desktop Analytics Sidebar */
     #sidebar {
-      width: 420px;
+      width: 430px;
       height: 100%;
-      background: rgba(15, 23, 42, 0.96);
-      backdrop-filter: blur(12px);
+      background: rgba(13, 18, 30, 0.95);
+      backdrop-filter: blur(14px);
       padding: 20px;
       display: flex;
       flex-direction: column;
       gap: 12px;
       overflow-y: auto;
       z-index: 1000;
-      border-left: 1px solid rgba(255, 255, 255, 0.1);
+      border-left: 1px solid rgba(255, 255, 255, 0.08);
+      box-shadow: -8px 0 32px rgba(0, 0, 0, 0.6);
     }
 
-    h2 { font-size: 1.25rem; font-weight: 700; color: #38bdf8; }
-    p.subtext { font-size: 0.8rem; color: #94a3b8; }
+    h2 { font-size: 1.25rem; font-weight: 700; color: #38bdf8; letter-spacing: -0.02em; }
+    p.subtext { font-size: 0.78rem; color: #94a3b8; }
 
     .card {
-      background: #1e293b;
-      border-radius: 8px;
-      padding: 14px;
-      border: 1px solid #334155;
+      background: #172033;
+      border-radius: 10px;
+      padding: 14px 16px;
+      border: 1px solid #23324d;
     }
 
-    .card h3 { font-size: 0.9rem; margin-bottom: 6px; color: #f1f5f9; }
+    .card h3 { font-size: 0.88rem; margin-bottom: 8px; color: #f1f5f9; font-weight: 600; text-transform: uppercase; letter-spacing: 0.05em; }
 
-    .control-group {
+    /* Segmented View Mode Switcher */
+    .view-mode-tabs {
       display: flex;
-      flex-direction: column;
-      gap: 8px;
+      background: #0f172a;
+      padding: 3px;
+      border-radius: 8px;
+      border: 1px solid #334155;
+      gap: 4px;
     }
 
+    .tab-btn {
+      flex: 1;
+      background: transparent;
+      border: none;
+      color: #94a3b8;
+      padding: 7px 4px;
+      border-radius: 6px;
+      font-size: 0.74rem;
+      font-weight: 600;
+      cursor: pointer;
+      transition: all 0.2s ease;
+      text-align: center;
+    }
+
+    .tab-btn.active {
+      background: #0284c7;
+      color: #ffffff;
+      box-shadow: 0 2px 8px rgba(2, 132, 199, 0.4);
+    }
+
+    /* Controls */
     select {
       width: 100%;
       background: #0f172a;
@@ -74,36 +100,49 @@
       outline: none;
       cursor: pointer;
     }
+    select:focus { border-color: #38bdf8; }
 
-    select:focus {
-      border-color: #38bdf8;
+    /* Slider */
+    .slider-container {
+      display: flex;
+      flex-direction: column;
+      gap: 4px;
+      font-size: 0.78rem;
+      color: #94a3b8;
+      margin-top: 4px;
+    }
+    input[type="range"] {
+      accent-color: #38bdf8;
+      cursor: pointer;
     }
 
+    /* Stat Rows */
     .stat-row {
       display: flex;
       justify-content: space-between;
       align-items: center;
       padding: 6px 0;
-      border-bottom: 1px solid #334155;
+      border-bottom: 1px solid #23324d;
       font-size: 0.8rem;
     }
     .stat-row:last-child { border-bottom: none; }
     .stat-tag { display: flex; align-items: center; gap: 8px; }
-    .stat-pill { width: 10px; height: 10px; border-radius: 2px; flex-shrink: 0; }
-    .stat-val { font-weight: 600; color: #f8fafc; }
+    .stat-pill { width: 10px; height: 10px; border-radius: 3px; flex-shrink: 0; }
+    .stat-val { font-weight: 600; color: #f8fafc; font-feature-settings: "tnum"; }
 
     .btn-3d {
       display: block;
       text-align: center;
-      background: #0284c7;
+      background: linear-gradient(135deg, #0284c7, #2563eb);
       color: white;
       text-decoration: none;
-      padding: 9px 12px;
-      border-radius: 6px;
+      padding: 10px 14px;
+      border-radius: 8px;
       font-weight: 600;
       font-size: 0.82rem;
+      transition: opacity 0.2s;
     }
-    .btn-3d:hover { background: #0369a1; }
+    .btn-3d:hover { opacity: 0.9; }
 
     .drawer-handle {
       display: none;
@@ -114,14 +153,15 @@
       margin: 0 auto 8px auto;
     }
 
+    /* Mobile Responsive */
     @media (max-width: 768px) {
       body { flex-direction: column; }
       #map { position: absolute; top: 0; left: 0; right: 0; bottom: 0; }
       #sidebar {
-        position: absolute; bottom: 0; left: 0; width: 100%; max-height: 52vh;
+        position: absolute; bottom: 0; left: 0; width: 100%; max-height: 54vh;
         border-left: none; border-top: 2px solid rgba(56, 189, 248, 0.4);
-        border-top-left-radius: 16px; border-top-right-radius: 16px;
-        box-shadow: 0 -8px 24px rgba(0, 0, 0, 0.7); padding: 12px 16px 24px 16px;
+        border-top-left-radius: 18px; border-top-right-radius: 18px;
+        box-shadow: 0 -8px 28px rgba(0, 0, 0, 0.8); padding: 14px 16px 28px 16px;
       }
       .drawer-handle { display: block; }
       h2 { font-size: 1.1rem; }
@@ -137,37 +177,41 @@
 
     <div>
       <h2>Assam 2026 LULC Explorer</h2>
-      <p class="subtext">GIS Analytics & Interactive Land Classification</p>
+      <p class="subtext">Multi-Scale Earth Observation & District Analytics</p>
     </div>
 
-    <!-- District Selection & Layer Filter -->
-    <div class="card control-group">
-      <div>
-        <label style="font-size: 0.75rem; color: #94a3b8; display: block; margin-bottom: 4px;">Jump to District:</label>
-        <select id="district-dropdown">
-          <option value="">-- Choose District --</option>
-        </select>
-      </div>
+    <!-- Mode Selector Tabs -->
+    <div class="view-mode-tabs">
+      <button class="tab-btn active" id="tab-state">State Overview</button>
+      <button class="tab-btn" id="tab-all-districts">All Districts</button>
+      <button class="tab-btn" id="tab-focus-district">Focus District</button>
+    </div>
 
-      <div>
-        <label style="font-size: 0.75rem; color: #94a3b8; display: block; margin-bottom: 4px;">Map Choropleth Mode:</label>
-        <select id="theme-filter">
-          <option value="dominant">Dominant Land Cover</option>
-          <option value="pct_forest">Forest / Tree Cover (%)</option>
-          <option value="pct_cropland">Cropland / Agriculture (%)</option>
-          <option value="pct_water">Water Bodies (%)</option>
-          <option value="pct_shrub_tea">Tea & Shrubland (%)</option>
-          <option value="pct_builtup">Built-up Settlements (%)</option>
-        </select>
+    <!-- District Selection Dropdown (Active in Mode 2 & 3) -->
+    <div class="card" id="district-selector-card">
+      <label style="font-size: 0.75rem; color: #94a3b8; display: block; margin-bottom: 4px;">Choose District:</label>
+      <select id="district-dropdown">
+        <option value="">-- Select a District --</option>
+      </select>
+    </div>
+
+    <!-- Opacity Control -->
+    <div class="card">
+      <div class="slider-container">
+        <div style="display: flex; justify-content: space-between;">
+          <span>Layer Opacity</span>
+          <span id="opacity-val">55%</span>
+        </div>
+        <input type="range" id="layer-opacity" min="0" max="1" step="0.05" value="0.55" />
       </div>
     </div>
 
     <a href="three_view.html" class="btn-3d">Switch to 3D Extruded Model &rarr;</a>
 
-    <!-- Active District Information -->
+    <!-- Dynamic Metrics Card -->
     <div class="card">
-      <h3 id="district-name">Select a District</h3>
-      <p id="district-meta" class="subtext">Click any district on map or select above</p>
+      <h3 id="panel-title">Assam State Land Cover</h3>
+      <p id="panel-meta" class="subtext">Aggregated LULC distribution across all districts</p>
       
       <div style="margin-top: 8px; height: 160px; position: relative;">
         <canvas id="lulcChart"></canvas>
@@ -176,16 +220,16 @@
       <div id="stat-list" style="margin-top: 10px;"></div>
     </div>
 
-    <!-- Legend -->
+    <!-- Modern Classification Legend -->
     <div class="card">
       <h3>Classification Key</h3>
-      <div id="legend-container" style="display: grid; grid-template-columns: 1fr 1fr; gap: 6px; margin-top: 6px;">
-        <div class="stat-tag"><span class="stat-pill" style="background: #1b7837;"></span> <span style="font-size:0.75rem;">Forest Cover</span></div>
-        <div class="stat-tag"><span class="stat-pill" style="background: #78c679;"></span> <span style="font-size:0.75rem;">Shrub / Tea</span></div>
-        <div class="stat-tag"><span class="stat-pill" style="background: #fecc5c;"></span> <span style="font-size:0.75rem;">Cropland</span></div>
-        <div class="stat-tag"><span class="stat-pill" style="background: #2b83ba;"></span> <span style="font-size:0.75rem;">Water Bodies</span></div>
-        <div class="stat-tag"><span class="stat-pill" style="background: #e31a1c;"></span> <span style="font-size:0.75rem;">Built-up Area</span></div>
-        <div class="stat-tag"><span class="stat-pill" style="background: #d95f0e;"></span> <span style="font-size:0.75rem;">Barren / Chars</span></div>
+      <div style="display: grid; grid-template-columns: 1fr 1fr; gap: 8px; margin-top: 6px;">
+        <div class="stat-tag"><span class="stat-pill" style="background: #10b981;"></span> <span style="font-size:0.75rem;">Dense Forest</span></div>
+        <div class="stat-tag"><span class="stat-pill" style="background: #84cc16;"></span> <span style="font-size:0.75rem;">Tea / Shrubland</span></div>
+        <div class="stat-tag"><span class="stat-pill" style="background: #f59e0b;"></span> <span style="font-size:0.75rem;">Cropland / Agri</span></div>
+        <div class="stat-tag"><span class="stat-pill" style="background: #0ea5e9;"></span> <span style="font-size:0.75rem;">Water Bodies</span></div>
+        <div class="stat-tag"><span class="stat-pill" style="background: #ef4444;"></span> <span style="font-size:0.75rem;">Built-up Urban</span></div>
+        <div class="stat-tag"><span class="stat-pill" style="background: #d97706;"></span> <span style="font-size:0.75rem;">River Sandbars</span></div>
       </div>
     </div>
   </div>
@@ -199,7 +243,7 @@
       zoomControl: true
     });
 
-    // Google Hybrid Basemap
+    // Google Earth Hybrid Satellite Base Layer
     const googleHybrid = L.tileLayer('https://mt1.google.com/vt/lyrs=y&x={x}&y={y}&z={z}', {
       maxZoom: 20,
       attribution: 'Map &copy; Google'
@@ -207,71 +251,77 @@
 
     let districtLayer = null;
     let chartInstance = null;
-    let selectedLayer = null;
+    let geojsonData = null;
     let districtLookup = {};
-    let currentTheme = 'dominant';
+    let activeMode = 'state'; // 'state', 'all', 'focus'
+    let selectedDistrictName = null;
+    let globalOpacity = 0.55;
 
+    // Upgraded Color Map
     const classes = [
-      { key: 'pct_forest', label: 'Forest / Tree Cover', color: '#1b7837' },
-      { key: 'pct_shrub_tea', label: 'Shrub / Tea Gardens', color: '#78c679' },
-      { key: 'pct_cropland', label: 'Cropland / Agriculture', color: '#fecc5c' },
-      { key: 'pct_water', label: 'Water (Rivers/Wetlands)', color: '#2b83ba' },
-      { key: 'pct_builtup', label: 'Built-up / Urban', color: '#e31a1c' },
-      { key: 'pct_barren', label: 'Barren / River Chars', color: '#d95f0e' }
+      { key: 'pct_forest', label: 'Dense Forest / Canopy', color: '#10b981' },
+      { key: 'pct_shrub_tea', label: 'Tea Estates & Shrub', color: '#84cc16' },
+      { key: 'pct_cropland', label: 'Cropland / Agriculture', color: '#f59e0b' },
+      { key: 'pct_water', label: 'Water (Rivers/Beels)', color: '#0ea5e9' },
+      { key: 'pct_builtup', label: 'Built-up Settlements', color: '#ef4444' },
+      { key: 'pct_barren', label: 'River Chars & Sandbars', color: '#d97706' }
     ];
 
-    function getMetricColor(value, theme) {
-      const v = parseFloat(value || 0);
-      if (theme === 'pct_forest') {
-        return v > 50 ? '#00441b' : v > 35 ? '#1b7837' : v > 20 ? '#78c679' : v > 10 ? '#c2e699' : '#a1d99b';
-      } else if (theme === 'pct_cropland') {
-        return v > 45 ? '#b35806' : v > 30 ? '#f1a340' : v > 15 ? '#fee08b' : '#ffffbf';
-      } else if (theme === 'pct_water') {
-        return v > 15 ? '#08306b' : v > 10 ? '#2171b5' : v > 5 ? '#6baed6' : '#c6dbef';
-      } else if (theme === 'pct_builtup') {
-        return v > 12 ? '#67000d' : v > 8 ? '#cb181d' : v > 4 ? '#fb6a4a' : '#fcae91';
-      } else {
-        return v > 20 ? '#006d2c' : v > 10 ? '#31a354' : '#74c476';
-      }
-    }
-
-    function getDominantColor(props) {
-      if (props.dominant_color) return props.dominant_color;
+    function getDominantClassColor(props) {
       let maxVal = -1;
-      let dominantHex = '#fecc5c';
+      let dominantColor = '#10b981';
       classes.forEach(c => {
         const val = parseFloat(props[c.key] || 0);
         if (val > maxVal) {
           maxVal = val;
-          dominantHex = c.color;
+          dominantColor = c.color;
         }
       });
-      return dominantHex;
+      return dominantColor;
     }
 
-    function getDistrictStyle(feature) {
+    function getFeatureStyle(feature) {
       const p = feature.properties || {};
-      let fillColor;
+      const dName = p.name || p.DISTRICT || p.district;
+      const dominantColor = getDominantClassColor(p);
 
-      if (currentTheme === 'dominant') {
-        fillColor = getDominantColor(p);
+      if (activeMode === 'state') {
+        // Mode 1: Uniform outline, seamless state overview
+        return {
+          fillColor: '#0ea5e9',
+          weight: 1.2,
+          opacity: 0.8,
+          color: '#ffffff',
+          dashArray: '2',
+          fillOpacity: globalOpacity * 0.4
+        };
+      } else if (activeMode === 'all') {
+        // Mode 2: Full Choropleth showing dominant land covers
+        const isSelected = selectedDistrictName === dName;
+        return {
+          fillColor: dominantColor,
+          weight: isSelected ? 3.5 : 1.5,
+          opacity: 1,
+          color: isSelected ? '#ffffff' : '#e2e8f0',
+          dashArray: isSelected ? '' : '1',
+          fillOpacity: isSelected ? Math.min(1, globalOpacity + 0.3) : globalOpacity
+        };
       } else {
-        fillColor = getMetricColor(p[currentTheme], currentTheme);
+        // Mode 3: Focused Single District
+        const isSelected = selectedDistrictName === dName;
+        return {
+          fillColor: dominantColor,
+          weight: isSelected ? 3.5 : 1,
+          opacity: isSelected ? 1 : 0.2,
+          color: isSelected ? '#38bdf8' : '#64748b',
+          fillOpacity: isSelected ? Math.min(1, globalOpacity + 0.35) : 0.05
+        };
       }
-
-      return {
-        fillColor: fillColor,
-        weight: 2,
-        opacity: 1,
-        color: '#ffffff',
-        dashArray: '2',
-        fillOpacity: currentTheme === 'dominant' ? 0.6 : 0.75
-      };
     }
 
-    function updateDetails(name, properties) {
-      document.getElementById('district-name').innerText = name;
-      document.getElementById('district-meta').innerText = 'Relative Area Percentage (%)';
+    function updateMetricsPanel(title, subtitle, properties) {
+      document.getElementById('panel-title').innerText = title;
+      document.getElementById('panel-meta').innerText = subtitle;
 
       const values = [];
       const labels = [];
@@ -320,69 +370,107 @@
       });
     }
 
-    function highlightDistrict(layer, feature) {
-      if (selectedLayer && districtLayer) {
-        districtLayer.resetStyle(selectedLayer);
-      }
-      selectedLayer = layer;
-      selectedLayer.setStyle({
-        weight: 4,
-        color: '#fbbf24',
-        fillOpacity: 0.9
-      });
-      selectedLayer.bringToFront();
+    // Compute aggregated state-wide average across all district features
+    function computeStatewideAverages() {
+      if (!geojsonData) return;
+      const stateTotals = {};
+      classes.forEach(c => stateTotals[c.key] = 0);
+      const totalDistricts = geojsonData.features.length;
 
-      // Ensure proper padding so district is visible above mobile drawer
+      geojsonData.features.forEach(f => {
+        classes.forEach(c => {
+          stateTotals[c.key] += parseFloat(f.properties[c.key] || 0);
+        });
+      });
+
+      const stateAverages = {};
+      classes.forEach(c => {
+        stateAverages[c.key] = (stateTotals[c.key] / totalDistricts).toFixed(2);
+      });
+
+      updateMetricsPanel("State of Assam", "Aggregated State-wide Coverage Ratios", stateAverages);
+    }
+
+    function selectDistrict(name) {
+      selectedDistrictName = name;
+      const item = districtLookup[name];
+      if (!item) return;
+
+      if (districtLayer) districtLayer.setStyle(getFeatureStyle);
+      item.layer.bringToFront();
+
       const paddingBottom = window.innerWidth < 768 ? 240 : 40;
-      map.fitBounds(layer.getBounds(), {
+      map.fitBounds(item.layer.getBounds(), {
         paddingTopLeft: [30, 30],
         paddingBottomRight: [30, paddingBottom]
       });
 
-      const props = feature.properties || {};
-      const dName = props.name || props.DISTRICT || props.district || "Assam District";
-      updateDetails(dName, props);
-
-      // Keep dropdown in sync
-      const dropdown = document.getElementById('district-dropdown');
-      if (dropdown) dropdown.value = dName;
+      updateMetricsPanel(name, "District LULC Coverage Distribution", item.feature.properties);
+      document.getElementById('district-dropdown').value = name;
     }
 
     function onEachFeature(feature, layer) {
-      const props = feature.properties || {};
-      const dName = props.name || props.DISTRICT || props.district || "Assam District";
+      const p = feature.properties || {};
+      const dName = p.name || p.DISTRICT || p.district || "Assam District";
       districtLookup[dName] = { layer, feature };
 
       layer.on({
         mouseover: (e) => {
-          if (window.innerWidth >= 768 && e.target !== selectedLayer) {
-            e.target.setStyle({ weight: 3, color: '#fbbf24', fillOpacity: 0.8 });
+          if (activeMode !== 'state' && window.innerWidth >= 768) {
+            e.target.setStyle({ weight: 3.5, color: '#38bdf8' });
             e.target.bringToFront();
           }
         },
         mouseout: (e) => {
-          if (window.innerWidth >= 768 && e.target !== selectedLayer) {
+          if (activeMode !== 'state' && window.innerWidth >= 768) {
             districtLayer.resetStyle(e.target);
           }
         },
         click: (e) => {
-          highlightDistrict(e.target, feature);
+          if (activeMode === 'state') setMode('all');
+          selectDistrict(dName);
         }
       });
     }
 
-    // Load GeoJSON with Polygon-only filter
+    function setMode(mode) {
+      activeMode = mode;
+      document.querySelectorAll('.tab-btn').forEach(btn => btn.classList.remove('active'));
+
+      if (mode === 'state') {
+        document.getElementById('tab-state').classList.add('active');
+        selectedDistrictName = null;
+        document.getElementById('district-dropdown').value = '';
+        computeStatewideAverages();
+        if (districtLayer) {
+          map.fitBounds(districtLayer.getBounds(), { padding: [20, 20] });
+          districtLayer.setStyle(getFeatureStyle);
+        }
+      } else if (mode === 'all') {
+        document.getElementById('tab-all-districts').classList.add('active');
+        if (districtLayer) districtLayer.setStyle(getFeatureStyle);
+        if (selectedDistrictName) selectDistrict(selectedDistrictName);
+      } else if (mode === 'focus') {
+        document.getElementById('tab-focus-district').classList.add('active');
+        if (!selectedDistrictName && geojsonData?.features.length > 0) {
+          const first = geojsonData.features[0].properties;
+          selectedDistrictName = first.name || first.DISTRICT || first.district;
+        }
+        if (selectedDistrictName) selectDistrict(selectedDistrictName);
+      }
+    }
+
+    // Load GeoJSON Dataset
     fetch('assam_districts.geojson.json')
       .then(res => res.json())
       .then(data => {
-        // Strip out any point geometries from Mapshaper
+        // Strip out non-polygon features[cite: 1]
         data.features = data.features.filter(f => 
           f.geometry && (f.geometry.type === 'Polygon' || f.geometry.type === 'MultiPolygon')
         );
+        geojsonData = data;
 
         const dropdown = document.getElementById('district-dropdown');
-
-        // Populate dropdown with all polygon names
         data.features.forEach(f => {
           const name = f.properties?.name || f.properties?.DISTRICT || f.properties?.district;
           if (name) {
@@ -394,35 +482,33 @@
         });
 
         districtLayer = L.geoJSON(data, {
-          style: getDistrictStyle,
+          style: getFeatureStyle,
           onEachFeature: onEachFeature
         }).addTo(map);
 
-        // Preload first district
-        if (data.features.length > 0) {
-          const first = data.features[0];
-          highlightDistrict(districtLookup[first.properties?.name || first.properties?.DISTRICT].layer, first);
-        }
+        computeStatewideAverages();
       })
       .catch(err => console.error("Error loading GeoJSON:", err));
 
-    // Dropdown change handler
+    // Event Listeners for Tabs
+    document.getElementById('tab-state').addEventListener('click', () => setMode('state'));
+    document.getElementById('tab-all-districts').addEventListener('click', () => setMode('all'));
+    document.getElementById('tab-focus-district').addEventListener('click', () => setMode('focus'));
+
+    // Dropdown change listener
     document.getElementById('district-dropdown').addEventListener('change', (e) => {
       const name = e.target.value;
-      if (districtLookup[name]) {
-        highlightDistrict(districtLookup[name].layer, districtLookup[name].feature);
+      if (name) {
+        if (activeMode === 'state') setMode('focus');
+        selectDistrict(name);
       }
     });
 
-    // Theme dropdown listener
-    document.getElementById('theme-filter').addEventListener('change', (e) => {
-      currentTheme = e.target.value;
-      if (districtLayer) {
-        districtLayer.setStyle(getDistrictStyle);
-      }
-      if (selectedLayer) {
-        selectedLayer.setStyle({ weight: 4, color: '#fbbf24', fillOpacity: 0.9 });
-      }
+    // Opacity Slider listener
+    document.getElementById('layer-opacity').addEventListener('input', (e) => {
+      globalOpacity = parseFloat(e.target.value);
+      document.getElementById('opacity-val').innerText = `${Math.round(globalOpacity * 100)}%`;
+      if (districtLayer) districtLayer.setStyle(getFeatureStyle);
     });
   </script>
 </body>
