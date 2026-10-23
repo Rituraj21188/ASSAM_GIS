@@ -17,7 +17,7 @@
       font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, sans-serif;
       height: 100vh;
       width: 100vw;
-      background: #090d16;
+      background: #060a12;
       color: #e2e8f0;
       overflow: hidden;
       display: flex;
@@ -30,11 +30,11 @@
       z-index: 1;
     }
 
-    /* Desktop Analytics Sidebar */
+    /* Desktop Sidebar */
     #sidebar {
       width: 430px;
       height: 100%;
-      background: rgba(13, 18, 30, 0.95);
+      background: rgba(10, 15, 26, 0.96);
       backdrop-filter: blur(14px);
       padding: 20px;
       display: flex;
@@ -42,29 +42,29 @@
       gap: 12px;
       overflow-y: auto;
       z-index: 1000;
-      border-left: 1px solid rgba(255, 255, 255, 0.08);
-      box-shadow: -8px 0 32px rgba(0, 0, 0, 0.6);
+      border-left: 1px solid rgba(255, 255, 255, 0.1);
+      box-shadow: -8px 0 32px rgba(0, 0, 0, 0.7);
     }
 
     h2 { font-size: 1.25rem; font-weight: 700; color: #38bdf8; letter-spacing: -0.02em; }
     p.subtext { font-size: 0.78rem; color: #94a3b8; }
 
     .card {
-      background: #172033;
+      background: #131b2e;
       border-radius: 10px;
       padding: 14px 16px;
-      border: 1px solid #23324d;
+      border: 1px solid #1e2c47;
     }
 
     .card h3 { font-size: 0.88rem; margin-bottom: 8px; color: #f1f5f9; font-weight: 600; text-transform: uppercase; letter-spacing: 0.05em; }
 
-    /* Segmented View Mode Switcher */
+    /* Segmented Mode Switcher */
     .view-mode-tabs {
       display: flex;
-      background: #0f172a;
-      padding: 3px;
+      background: #0b1120;
+      padding: 4px;
       border-radius: 8px;
-      border: 1px solid #334155;
+      border: 1px solid #24324f;
       gap: 4px;
     }
 
@@ -73,9 +73,9 @@
       background: transparent;
       border: none;
       color: #94a3b8;
-      padding: 7px 4px;
+      padding: 8px 4px;
       border-radius: 6px;
-      font-size: 0.74rem;
+      font-size: 0.75rem;
       font-weight: 600;
       cursor: pointer;
       transition: all 0.2s ease;
@@ -85,14 +85,14 @@
     .tab-btn.active {
       background: #0284c7;
       color: #ffffff;
-      box-shadow: 0 2px 8px rgba(2, 132, 199, 0.4);
+      box-shadow: 0 2px 10px rgba(2, 132, 199, 0.5);
     }
 
     /* Controls */
     select {
       width: 100%;
-      background: #0f172a;
-      border: 1px solid #334155;
+      background: #090e1a;
+      border: 1px solid #24324f;
       color: #f8fafc;
       padding: 9px 12px;
       border-radius: 6px;
@@ -122,13 +122,13 @@
       justify-content: space-between;
       align-items: center;
       padding: 6px 0;
-      border-bottom: 1px solid #23324d;
+      border-bottom: 1px solid #1e2c47;
       font-size: 0.8rem;
     }
     .stat-row:last-child { border-bottom: none; }
     .stat-tag { display: flex; align-items: center; gap: 8px; }
     .stat-pill { width: 10px; height: 10px; border-radius: 3px; flex-shrink: 0; }
-    .stat-val { font-weight: 600; color: #f8fafc; font-feature-settings: "tnum"; }
+    .stat-val { font-weight: 600; color: #f8fafc; }
 
     .btn-3d {
       display: block;
@@ -140,7 +140,6 @@
       border-radius: 8px;
       font-weight: 600;
       font-size: 0.82rem;
-      transition: opacity 0.2s;
     }
     .btn-3d:hover { opacity: 0.9; }
 
@@ -153,7 +152,7 @@
       margin: 0 auto 8px auto;
     }
 
-    /* Mobile Responsive */
+    /* Mobile */
     @media (max-width: 768px) {
       body { flex-direction: column; }
       #map { position: absolute; top: 0; left: 0; right: 0; bottom: 0; }
@@ -187,7 +186,7 @@
       <button class="tab-btn" id="tab-focus-district">Focus District</button>
     </div>
 
-    <!-- District Selection Dropdown (Active in Mode 2 & 3) -->
+    <!-- District Selection Dropdown -->
     <div class="card" id="district-selector-card">
       <label style="font-size: 0.75rem; color: #94a3b8; display: block; margin-bottom: 4px;">Choose District:</label>
       <select id="district-dropdown">
@@ -200,9 +199,9 @@
       <div class="slider-container">
         <div style="display: flex; justify-content: space-between;">
           <span>Layer Opacity</span>
-          <span id="opacity-val">55%</span>
+          <span id="opacity-val">65%</span>
         </div>
-        <input type="range" id="layer-opacity" min="0" max="1" step="0.05" value="0.55" />
+        <input type="range" id="layer-opacity" min="0" max="1" step="0.05" value="0.65" />
       </div>
     </div>
 
@@ -220,16 +219,17 @@
       <div id="stat-list" style="margin-top: 10px;"></div>
     </div>
 
-    <!-- Modern Classification Legend -->
+    <!-- High-Contrast Legend -->
     <div class="card">
       <h3>Classification Key</h3>
       <div style="display: grid; grid-template-columns: 1fr 1fr; gap: 8px; margin-top: 6px;">
-        <div class="stat-tag"><span class="stat-pill" style="background: #10b981;"></span> <span style="font-size:0.75rem;">Dense Forest</span></div>
-        <div class="stat-tag"><span class="stat-pill" style="background: #84cc16;"></span> <span style="font-size:0.75rem;">Tea / Shrubland</span></div>
-        <div class="stat-tag"><span class="stat-pill" style="background: #f59e0b;"></span> <span style="font-size:0.75rem;">Cropland / Agri</span></div>
-        <div class="stat-tag"><span class="stat-pill" style="background: #0ea5e9;"></span> <span style="font-size:0.75rem;">Water Bodies</span></div>
+        <div class="stat-tag"><span class="stat-pill" style="background: #059669;"></span> <span style="font-size:0.75rem;">Dense Forest (>50%)</span></div>
+        <div class="stat-tag"><span class="stat-pill" style="background: #10b981;"></span> <span style="font-size:0.75rem;">Mixed Forest</span></div>
+        <div class="stat-tag"><span class="stat-pill" style="background: #84cc16;"></span> <span style="font-size:0.75rem;">Tea / Agroforestry</span></div>
+        <div class="stat-tag"><span class="stat-pill" style="background: #eab308;"></span> <span style="font-size:0.75rem;">Cropland / Agri</span></div>
+        <div class="stat-tag"><span class="stat-pill" style="background: #0284c7;"></span> <span style="font-size:0.75rem;">Water (Rivers/Beels)</span></div>
         <div class="stat-tag"><span class="stat-pill" style="background: #ef4444;"></span> <span style="font-size:0.75rem;">Built-up Urban</span></div>
-        <div class="stat-tag"><span class="stat-pill" style="background: #d97706;"></span> <span style="font-size:0.75rem;">River Sandbars</span></div>
+        <div class="stat-tag"><span class="stat-pill" style="background: #f97316;"></span> <span style="font-size:0.75rem;">Chars / River Sandbars</span></div>
       </div>
     </div>
   </div>
@@ -255,67 +255,94 @@
     let districtLookup = {};
     let activeMode = 'state'; // 'state', 'all', 'focus'
     let selectedDistrictName = null;
-    let globalOpacity = 0.55;
+    let globalOpacity = 0.65;
 
-    // Upgraded Color Map
+    // Upgraded Color Palette with Balanced Chroma
     const classes = [
-      { key: 'pct_forest', label: 'Dense Forest / Canopy', color: '#10b981' },
+      { key: 'pct_forest', label: 'Dense Forest / Canopy', color: '#059669' },
       { key: 'pct_shrub_tea', label: 'Tea Estates & Shrub', color: '#84cc16' },
-      { key: 'pct_cropland', label: 'Cropland / Agriculture', color: '#f59e0b' },
-      { key: 'pct_water', label: 'Water (Rivers/Beels)', color: '#0ea5e9' },
+      { key: 'pct_cropland', label: 'Cropland / Agriculture', color: '#eab308' },
+      { key: 'pct_water', label: 'Water (Rivers/Beels)', color: '#0284c7' },
       { key: 'pct_builtup', label: 'Built-up Settlements', color: '#ef4444' },
-      { key: 'pct_barren', label: 'River Chars & Sandbars', color: '#d97706' }
+      { key: 'pct_barren', label: 'River Chars & Sandbars', color: '#f97316' }
     ];
 
-    function getDominantClassColor(props) {
-      let maxVal = -1;
-      let dominantColor = '#10b981';
-      classes.forEach(c => {
-        const val = parseFloat(props[c.key] || 0);
-        if (val > maxVal) {
-          maxVal = val;
-          dominantColor = c.color;
-        }
-      });
-      return dominantColor;
+    // High-Contrast Multi-Hue Classifier
+    function getDynamicChoroplethColor(p) {
+      const forest = parseFloat(p.pct_forest || 0);
+      const crop = parseFloat(p.pct_cropland || 0);
+      const tea = parseFloat(p.pct_shrub_tea || 0);
+      const water = parseFloat(p.pct_water || 0);
+      const built = parseFloat(p.pct_builtup || 0);
+      const barren = parseFloat(p.pct_barren || 0);
+
+      // Urban/Settlement Hotspots
+      if (built >= 10.0) return '#ef4444';
+
+      // Riverine Chars / Active Sandbars
+      if (barren >= 10.0) return '#f97316';
+
+      // Water/Wetland Rich Districts
+      if (water >= 4.0) return '#0284c7';
+
+      // Upper Assam Tea Belt
+      if (tea >= 5.0) return '#84cc16';
+
+      // Agricultural Heartlands vs Heavily Forested Hills
+      if (crop > forest) {
+        return crop >= 40 ? '#ca8a04' : '#eab308';
+      } else {
+        return forest >= 65 ? '#065f46' : forest >= 45 ? '#059669' : '#10b981';
+      }
     }
 
     function getFeatureStyle(feature) {
       const p = feature.properties || {};
       const dName = p.name || p.DISTRICT || p.district;
-      const dominantColor = getDominantClassColor(p);
+      const dynamicColor = getDynamicChoroplethColor(p);
+      const isSelected = selectedDistrictName === dName;
 
       if (activeMode === 'state') {
-        // Mode 1: Uniform outline, seamless state overview
+        // Mode 1: State View - Full Vibrant Composite Choropleth across Assam
         return {
-          fillColor: '#0ea5e9',
+          fillColor: dynamicColor,
           weight: 1.2,
-          opacity: 0.8,
+          opacity: 0.9,
           color: '#ffffff',
-          dashArray: '2',
-          fillOpacity: globalOpacity * 0.4
+          dashArray: '',
+          fillOpacity: globalOpacity * 0.85
         };
       } else if (activeMode === 'all') {
-        // Mode 2: Full Choropleth showing dominant land covers
-        const isSelected = selectedDistrictName === dName;
+        // Mode 2: All Districts - Clear Boundaries with Distinct Dynamic Fills
         return {
-          fillColor: dominantColor,
-          weight: isSelected ? 3.5 : 1.5,
+          fillColor: dynamicColor,
+          weight: isSelected ? 3.5 : 1.8,
           opacity: 1,
-          color: isSelected ? '#ffffff' : '#e2e8f0',
+          color: isSelected ? '#38bdf8' : '#ffffff',
           dashArray: isSelected ? '' : '1',
-          fillOpacity: isSelected ? Math.min(1, globalOpacity + 0.3) : globalOpacity
+          fillOpacity: isSelected ? Math.min(0.95, globalOpacity + 0.25) : globalOpacity
         };
       } else {
-        // Mode 3: Focused Single District
-        const isSelected = selectedDistrictName === dName;
-        return {
-          fillColor: dominantColor,
-          weight: isSelected ? 3.5 : 1,
-          opacity: isSelected ? 1 : 0.2,
-          color: isSelected ? '#38bdf8' : '#64748b',
-          fillOpacity: isSelected ? Math.min(1, globalOpacity + 0.35) : 0.05
-        };
+        // Mode 3: Focus District - Target is spotlighted, ALL OTHER DISTRICT BOUNDARIES REMAIN VISIBLE
+        if (isSelected) {
+          return {
+            fillColor: dynamicColor,
+            weight: 3.5,
+            opacity: 1,
+            color: '#38bdf8', // Neon cyan highlight border
+            dashArray: '',
+            fillOpacity: Math.min(1.0, globalOpacity + 0.3)
+          };
+        } else {
+          return {
+            fillColor: dynamicColor,
+            weight: 1.2,
+            opacity: 0.45,
+            color: '#94a3b8', // Subtle crisp borders kept active
+            dashArray: '3',
+            fillOpacity: 0.12  // Translucent ghost fill so background and geography stay visible
+          };
+        }
       }
     }
 
@@ -370,7 +397,6 @@
       });
     }
 
-    // Compute aggregated state-wide average across all district features
     function computeStatewideAverages() {
       if (!geojsonData) return;
       const stateTotals = {};
@@ -424,10 +450,13 @@
         mouseout: (e) => {
           if (activeMode !== 'state' && window.innerWidth >= 768) {
             districtLayer.resetStyle(e.target);
+            if (selectedDistrictName && districtLookup[selectedDistrictName]) {
+              districtLookup[selectedDistrictName].layer.bringToFront();
+            }
           }
         },
         click: (e) => {
-          if (activeMode === 'state') setMode('all');
+          if (activeMode === 'state') setMode('focus');
           selectDistrict(dName);
         }
       });
@@ -464,7 +493,6 @@
     fetch('assam_districts.geojson.json')
       .then(res => res.json())
       .then(data => {
-        // Strip out non-polygon features[cite: 1]
         data.features = data.features.filter(f => 
           f.geometry && (f.geometry.type === 'Polygon' || f.geometry.type === 'MultiPolygon')
         );
