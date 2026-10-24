@@ -309,11 +309,11 @@
         </div>
       </div>
 
-      <!-- Color Ramp Layer Switcher (Matches your 8 exported PNG files) -->
+      <!-- Color Ramp Layer Switcher (Supports all 8 exported PNGs) -->
       <div class="card">
         <label class="input-label" for="raster-ramp-select">🎨 Classification Color Ramp:</label>
         <select id="raster-ramp-select">
-          <option value="assam_lulc_viridis.png" selected>🟢 Viridis (Glowing River / Forest Canopy)</option>
+          <option value="assam_lulc_viridis.png" selected>🟢 Viridis (Glowing River / Canopy)</option>
           <option value="assam_lulc_turbo.png">🔥 Turbo (High Chroma Spectrum)</option>
           <option value="assam_lulc_Magma.png">🌋 Magma (Thermal River Contrast)</option>
           <option value="assam_lulc_Plasma.png">⚡ Plasma (Neon Violet & Amber)</option>
@@ -450,8 +450,12 @@
       attribution: 'Map &copy; Google'
     }).addTo(map);
 
-    // EXACT BOUNDING BOX MATCHED TO ASSAM EXTENT
-    const rasterBounds = [[24.1, 89.7], [28.2, 96.2]];
+    // EXACT REPROJECTED WGS 84 BOUNDS
+    // Derived from UTM Zone 46N: [148000.2651, 2658523.0000] to [820459.7349, 3108637.0000]
+    const rasterBounds = [
+      [23.9922, 89.5255], // [South, West]
+      [28.0645, 96.2625]  // [North, East]
+    ];
     
     // NATIVE IMAGE OVERLAY: Starts with Viridis PNG
     let lulcOverlay = L.imageOverlay('assam_lulc_viridis.png', rasterBounds, {
