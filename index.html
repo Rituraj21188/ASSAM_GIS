@@ -2,25 +2,35 @@
 <html lang="en">
 <head>
   <meta charset="UTF-8" />
-  <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no" />
-  <title>Assam 2026 LULC Analytics Portal</title>
+  <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no, viewport-fit=cover" />
+  <title>Assam 2026 LULC GeoTIFF Pseudo-Color Portal</title>
 
   <!-- Leaflet CSS -->
   <link rel="stylesheet" href="https://unpkg.com/leaflet@1.9.4/dist/leaflet.css" />
   <!-- Chart.js -->
   <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
+  <!-- GeoTIFF In-Browser Renderers -->
+  <script src="https://unpkg.com/georaster"></script>
+  <script src="https://unpkg.com/georaster-layer-for-leaflet"></script>
 
   <style>
-    * { box-sizing: border-box; margin: 0; padding: 0; }
+    * { box-sizing: border-box; margin: 0; padding: 0; -webkit-tap-highlight-color: transparent; }
     
-    body {
-      font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, sans-serif;
-      height: 100vh;
-      width: 100vw;
-      background: #040711;
+    html, body {
+      width: 100%;
+      height: 100%;
+      height: 100dvh;
+      background: #050811;
       color: #f1f5f9;
       overflow: hidden;
+      font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, sans-serif;
+    }
+
+    #app-container {
       display: flex;
+      width: 100%;
+      height: 100%;
+      position: relative;
     }
 
     #map {
@@ -28,16 +38,16 @@
       height: 100%;
       width: 100%;
       z-index: 1;
-      background: #0b0f19;
+      background: #050811;
     }
 
     /* Desktop Sidebar */
     #sidebar {
-      width: 440px;
+      width: 430px;
       height: 100%;
       background: rgba(8, 12, 24, 0.96);
       backdrop-filter: blur(16px);
-      padding: 20px;
+      padding: 18px;
       display: flex;
       flex-direction: column;
       gap: 12px;
@@ -45,46 +55,33 @@
       z-index: 1000;
       border-left: 1px solid rgba(255, 255, 255, 0.12);
       box-shadow: -10px 0 36px rgba(0, 0, 0, 0.75);
+      transition: transform 0.3s cubic-bezier(0.16, 1, 0.3, 1);
     }
 
-    .header-box {
-      display: flex;
-      justify-content: space-between;
-      align-items: flex-start;
-    }
+    .header-box { display: flex; justify-content: space-between; align-items: flex-start; }
+    h2 { font-size: 1.2rem; font-weight: 700; color: #38bdf8; letter-spacing: -0.02em; }
+    p.subtext { font-size: 0.76rem; color: #94a3b8; }
 
-    h2 { font-size: 1.25rem; font-weight: 700; color: #38bdf8; letter-spacing: -0.02em; }
-    p.subtext { font-size: 0.78rem; color: #94a3b8; }
-
-    .btn-info {
-      background: #1e293b;
-      border: 1px solid #38bdf8;
-      color: #38bdf8;
-      border-radius: 50%;
-      width: 28px;
-      height: 28px;
-      font-weight: 700;
-      font-size: 0.85rem;
-      cursor: pointer;
-      display: flex;
-      align-items: center;
-      justify-content: center;
-      transition: all 0.2s;
-    }
-    .btn-info:hover {
+    #status-badge {
+      font-size: 0.7rem;
+      padding: 4px 8px;
+      border-radius: 4px;
       background: #0284c7;
-      color: #ffffff;
+      color: white;
+      font-weight: 600;
+      display: inline-block;
+      margin-top: 4px;
     }
 
     .card {
       background: #0f172a;
       border-radius: 10px;
-      padding: 13px 15px;
+      padding: 12px 14px;
       border: 1px solid #1e293b;
     }
 
     .card h3 { 
-      font-size: 0.85rem; 
+      font-size: 0.82rem; 
       margin-bottom: 8px; 
       color: #f8fafc; 
       font-weight: 700; 
@@ -95,109 +92,78 @@
       align-items: center;
     }
 
-    .badge {
-      font-size: 0.7rem;
-      padding: 3px 8px;
-      border-radius: 4px;
-      font-weight: 600;
-      background: #0284c7;
-      color: #ffffff;
-      text-transform: none;
-    }
-
-    /* Segmented Mode Tabs */
-    .view-mode-tabs {
-      display: flex;
-      background: #060a14;
-      padding: 4px;
-      border-radius: 8px;
-      border: 1px solid #1e293b;
-      gap: 4px;
-    }
-
-    .tab-btn {
-      flex: 1;
-      background: transparent;
-      border: none;
-      color: #94a3b8;
-      padding: 8px 4px;
-      border-radius: 6px;
-      font-size: 0.75rem;
-      font-weight: 600;
-      cursor: pointer;
-      transition: all 0.2s cubic-bezier(0.4, 0, 0.2, 1);
-      text-align: center;
-    }
-
-    .tab-btn.active {
-      background: #0284c7;
-      color: #ffffff;
-      box-shadow: 0 2px 10px rgba(2, 132, 199, 0.5);
-    }
-
-    .input-label {
-      font-size: 0.75rem;
-      color: #94a3b8;
-      display: block;
-      margin-bottom: 4px;
-      font-weight: 500;
-    }
+    .input-label { font-size: 0.74rem; color: #94a3b8; display: block; margin-bottom: 4px; font-weight: 600; }
 
     select {
       width: 100%;
       background: #060a14;
       border: 1px solid #1e293b;
       color: #f8fafc;
-      padding: 9px 12px;
+      padding: 8px 10px;
       border-radius: 6px;
-      font-size: 0.84rem;
+      font-size: 0.82rem;
       outline: none;
       cursor: pointer;
     }
     select:focus { border-color: #38bdf8; }
 
-    .slider-container {
+    .slider-box {
       display: flex;
       flex-direction: column;
       gap: 4px;
-      font-size: 0.78rem;
+      font-size: 0.76rem;
       color: #94a3b8;
     }
-    input[type="range"] {
-      accent-color: #38bdf8;
-      cursor: pointer;
-    }
+    input[type="range"] { accent-color: #38bdf8; cursor: pointer; }
 
-    /* Stat Rows */
+    /* Custom Toggle Switch */
+    .switch-row {
+      display: flex;
+      justify-content: space-between;
+      align-items: center;
+      font-size: 0.78rem;
+      color: #cbd5e1;
+      padding: 2px 0;
+    }
+    .switch {
+      position: relative;
+      display: inline-block;
+      width: 38px;
+      height: 20px;
+    }
+    .switch input { opacity: 0; width: 0; height: 0; }
+    .slider {
+      position: absolute; cursor: pointer;
+      top: 0; left: 0; right: 0; bottom: 0;
+      background-color: #334155;
+      transition: .3s;
+      border-radius: 20px;
+    }
+    .slider:before {
+      position: absolute; content: "";
+      height: 14px; width: 14px;
+      left: 3px; bottom: 3px;
+      background-color: white;
+      transition: .3s;
+      border-radius: 50%;
+    }
+    input:checked + .slider { background-color: #0284c7; }
+    input:checked + .slider:before { transform: translateX(18px); }
+
     .stat-row {
       display: flex;
       justify-content: space-between;
       align-items: center;
       padding: 5px 0;
       border-bottom: 1px solid #1e293b;
-      font-size: 0.8rem;
+      font-size: 0.78rem;
     }
     .stat-row:last-child { border-bottom: none; }
     .stat-tag { display: flex; align-items: center; gap: 8px; }
-    .stat-pill { width: 12px; height: 12px; border-radius: 3px; flex-shrink: 0; box-shadow: 0 0 4px rgba(0,0,0,0.5); }
-    .stat-val { font-weight: 700; color: #f8fafc; font-feature-settings: "tnum"; }
+    .stat-pill { width: 11px; height: 11px; border-radius: 2px; flex-shrink: 0; }
+    .stat-val { font-weight: 700; color: #f8fafc; }
 
-    .btn-3d {
-      display: block;
-      text-align: center;
-      background: linear-gradient(135deg, #0284c7, #2563eb);
-      color: white;
-      text-decoration: none;
-      padding: 10px 14px;
-      border-radius: 8px;
-      font-weight: 600;
-      font-size: 0.82rem;
-      transition: opacity 0.2s;
-    }
-    .btn-3d:hover { opacity: 0.9; }
-
-    /* Map Custom Reset Control */
-    .leaflet-control-reset {
+    .leaflet-control-custom {
       background: #0f172a;
       border: 1px solid #38bdf8;
       color: #ffffff;
@@ -208,177 +174,138 @@
       cursor: pointer;
       box-shadow: 0 2px 8px rgba(0,0,0,0.5);
     }
-    .leaflet-control-reset:hover {
-      background: #0284c7;
-    }
 
-    /* About Modal */
-    #info-modal {
-      display: none;
-      position: fixed;
-      inset: 0;
-      background: rgba(0, 0, 0, 0.75);
-      backdrop-filter: blur(8px);
-      z-index: 2000;
-      align-items: center;
-      justify-content: center;
-      padding: 20px;
-    }
+    /* -------------------------------------------------------------
+       MOBILE & ANDROID RESPONSIVENESS (< 768px)
+    -------------------------------------------------------------- */
+    @media (max-width: 768px) and (orientation: portrait) {
+      #app-container { flex-direction: column; }
+      #map { position: absolute; inset: 0; height: 100%; }
 
-    .modal-content {
-      background: #0f172a;
-      border: 1px solid #334155;
-      border-radius: 12px;
-      max-width: 580px;
-      width: 100%;
-      padding: 24px;
-      box-shadow: 0 20px 40px rgba(0,0,0,0.8);
-      position: relative;
-      max-height: 85vh;
-      overflow-y: auto;
-    }
-
-    .modal-close {
-      position: absolute;
-      top: 16px;
-      right: 16px;
-      background: #1e293b;
-      border: none;
-      color: #94a3b8;
-      width: 30px;
-      height: 30px;
-      border-radius: 6px;
-      font-size: 1.1rem;
-      cursor: pointer;
-    }
-    .modal-close:hover { color: #fff; background: #334155; }
-
-    .modal-content h3 { font-size: 1.15rem; color: #38bdf8; margin-bottom: 12px; }
-    .modal-content p { font-size: 0.84rem; line-height: 1.5; color: #cbd5e1; margin-bottom: 12px; }
-    .modal-section { background: #1e293b; padding: 12px; border-radius: 6px; margin-bottom: 10px; }
-    .modal-section strong { color: #f8fafc; }
-
-    .drawer-handle {
-      display: none;
-      width: 44px;
-      height: 5px;
-      background: #475569;
-      border-radius: 3px;
-      margin: 0 auto 8px auto;
-    }
-
-    /* Mobile */
-    @media (max-width: 768px) {
-      body { flex-direction: column; }
-      #map { position: absolute; top: 0; left: 0; right: 0; bottom: 0; }
       #sidebar {
-        position: absolute; bottom: 0; left: 0; width: 100%; max-height: 54vh;
+        position: absolute; bottom: 0; left: 0; width: 100%; max-height: 52vh;
         border-left: none; border-top: 2px solid rgba(56, 189, 248, 0.4);
         border-top-left-radius: 18px; border-top-right-radius: 18px;
-        box-shadow: 0 -8px 28px rgba(0, 0, 0, 0.85); padding: 12px 16px 26px 16px;
+        box-shadow: 0 -8px 30px rgba(0, 0, 0, 0.9);
+        padding: 10px 14px 20px 14px;
+        transform: translateY(0);
       }
-      .drawer-handle { display: block; }
-      h2 { font-size: 1.1rem; }
+
+      #sidebar.collapsed { transform: translateY(calc(100% - 44px)); }
+
+      .mobile-toggle-btn {
+        display: flex !important;
+        align-items: center;
+        justify-content: center;
+        width: 100%;
+        height: 24px;
+        background: transparent;
+        border: none;
+        cursor: pointer;
+        margin-bottom: 4px;
+      }
+
+      .drawer-handle-bar { width: 44px; height: 5px; background: #475569; border-radius: 3px; }
+    }
+
+    @media (max-height: 500px) and (orientation: landscape) {
+      #app-container { flex-direction: row; }
+      #map { position: relative; flex: 1; height: 100%; }
+      #sidebar {
+        position: relative; width: 320px; height: 100%; max-height: 100vh;
+        border-top: none; border-left: 2px solid rgba(56, 189, 248, 0.4);
+        border-radius: 0; padding: 12px;
+        box-shadow: -8px 0 24px rgba(0, 0, 0, 0.85);
+        transform: none !important;
+      }
+      .mobile-toggle-btn { display: none !important; }
+      h2 { font-size: 1.05rem; }
     }
   </style>
 </head>
 <body>
 
-  <div id="map"></div>
+  <div id="app-container">
+    <div id="map"></div>
 
-  <div id="sidebar">
-    <div class="drawer-handle"></div>
+    <div id="sidebar">
+      <button class="mobile-toggle-btn" id="drawer-toggle" aria-label="Toggle Panel" style="display: none;">
+        <div class="drawer-handle-bar"></div>
+      </button>
 
-    <div class="header-box">
-      <div>
-        <h2>Assam 2026 LULC Explorer</h2>
-        <p class="subtext">Multi-Scale Earth Observation & District Spatial Analytics</p>
-      </div>
-      <button class="btn-info" id="open-info-modal" title="About LULC">i</button>
-    </div>
-
-    <!-- Mode Selector Tabs -->
-    <div class="view-mode-tabs">
-      <button class="tab-btn active" id="tab-state">State Overview</button>
-      <button class="tab-btn" id="tab-all-districts">All Districts</button>
-      <button class="tab-btn" id="tab-focus-district">Focus District</button>
-    </div>
-
-    <!-- Color Ramp Selector -->
-    <div class="card">
-      <label class="input-label" for="ramp-select">🎨 Select Color Ramp / Palette:</label>
-      <select id="ramp-select">
-        <option value="cyberpunk" selected>⚡ Cyberpunk Neon (Maximum Contrast)</option>
-        <option value="dynamic_world">🌍 ESA / Dynamic World Standard</option>
-        <option value="spectral">🌈 Spectral / Thermal Gradient</option>
-        <option value="viridis">🧪 Viridis Scientific</option>
-        <option value="turbo">🔥 Turbo High-Vibrancy</option>
-      </select>
-    </div>
-
-    <!-- District Selection Dropdown -->
-    <div class="card">
-      <label class="input-label" for="district-dropdown">Choose District to Inspect:</label>
-      <select id="district-dropdown">
-        <option value="">-- Select a District --</option>
-      </select>
-    </div>
-
-    <!-- Opacity Control -->
-    <div class="card">
-      <div class="slider-container">
-        <div style="display: flex; justify-content: space-between;">
-          <span>Vector Dynamic Opacity</span>
-          <span id="opacity-val">70%</span>
+      <div class="header-box">
+        <div>
+          <h2>Assam LULC GeoTIFF Shader</h2>
+          <p class="subtext">Dynamic In-Browser Raster Pseudocolor Engine</p>
+          <span id="status-badge">Streaming GeoTIFF...</span>
         </div>
-        <input type="range" id="layer-opacity" min="0.1" max="1" step="0.05" value="0.70" />
-      </div>
-    </div>
-
-    <a href="three_view.html" class="btn-3d">Switch to 3D Extruded Model &rarr;</a>
-
-    <!-- Dynamic Metrics Card -->
-    <div class="card">
-      <h3>
-        <span id="panel-title">Assam State Land Cover</span>
-        <span id="dominant-badge" class="badge">Statewide</span>
-      </h3>
-      <p id="panel-meta" class="subtext">Aggregated LULC distribution across all districts</p>
-      
-      <div style="margin-top: 8px; height: 160px; position: relative;">
-        <canvas id="lulcChart"></canvas>
       </div>
 
-      <div id="stat-list" style="margin-top: 10px;"></div>
-    </div>
-
-    <!-- Classification Legend -->
-    <div class="card">
-      <h3>Active Palette Legend</h3>
-      <div id="legend-items" style="display: grid; grid-template-columns: 1fr 1fr; gap: 8px; margin-top: 6px;"></div>
-    </div>
-  </div>
-
-  <!-- About LULC Modal -->
-  <div id="info-modal">
-    <div class="modal-content">
-      <button class="modal-close" id="close-info-modal">&times;</button>
-      <h3>Understanding Land Use & Land Cover (LULC)</h3>
-      <p>LULC provides the spatial baseline for environmental monitoring, agriculture, and water resource governance across the Brahmaputra and Barak river basins.</p>
-
-      <div class="modal-section">
-        <strong>1. Land Cover (Biophysical Nature):</strong>
-        <p style="margin: 4px 0 0 0; font-size: 0.8rem; color: #94a3b8;">Refers to what is physically present on the surface observed by Earth observation satellites and UAVs (e.g., dense canopy, open water, sandbars, concrete).</p>
+      <!-- Basemap Toggle Card -->
+      <div class="card">
+        <div class="switch-row">
+          <span>Satellite Basemap</span>
+          <label class="switch">
+            <input type="checkbox" id="basemap-toggle" checked />
+            <span class="slider"></span>
+          </label>
+        </div>
+        <p style="font-size:0.7rem; color:#64748b; margin-top:4px;">Toggle OFF to isolate the pure raster on a dark backdrop (QGIS Mode).</p>
       </div>
 
-      <div class="modal-section">
-        <strong>2. Land Use (Anthropogenic Function):</strong>
-        <p style="margin: 4px 0 0 0; font-size: 0.8rem; color: #94a3b8;">Refers to how humans manage and exploit that land cover for economic and living purposes (e.g., tea estates, paddy cultivation, protected biosphere reserves).</p>
+      <!-- Pseudocolor Ramp Selector -->
+      <div class="card">
+        <label class="input-label" for="raster-ramp-select">🎨 GeoTIFF Pseudocolor Ramp:</label>
+        <select id="raster-ramp-select">
+          <option value="qgis_viridis" selected>🟢 QGIS Viridis (Fluorescent Rivers & Canopy)</option>
+          <option value="cyberpunk">⚡ Cyberpunk Neon (High Contrast)</option>
+          <option value="dynamic_world">🌍 ESA Dynamic World Standard</option>
+          <option value="spectral">🌈 Spectral Continuous</option>
+          <option value="magma">🌋 Magma / Thermal Glow</option>
+        </select>
       </div>
 
-      <div class="modal-section">
-        <strong>Why It Matters in Assam:</strong>
-        <p style="margin: 4px 0 0 0; font-size: 0.8rem; color: #94a3b8;">Differentiating cropland from active river chars and tracking seasonal wetland dynamics helps authorities plan flood risk buffers, monitor agricultural yields, and preserve critical wildlife corridors.</p>
+      <!-- District Selection -->
+      <div class="card">
+        <label class="input-label" for="district-dropdown">Inspect District:</label>
+        <select id="district-dropdown">
+          <option value="">-- Choose District to Zoom --</option>
+        </select>
+      </div>
+
+      <!-- Transparency Sliders -->
+      <div class="card">
+        <div class="slider-box">
+          <div style="display: flex; justify-content: space-between;">
+            <span>GeoTIFF Raster Opacity</span>
+            <span id="raster-opacity-val">85%</span>
+          </div>
+          <input type="range" id="raster-opacity" min="0" max="1" step="0.05" value="0.85" />
+        </div>
+        <div class="slider-box" style="margin-top: 8px;">
+          <div style="display: flex; justify-content: space-between;">
+            <span>District Boundary Outlines</span>
+            <span id="vector-opacity-val">40%</span>
+          </div>
+          <input type="range" id="vector-opacity" min="0" max="1" step="0.05" value="0.40" />
+        </div>
+      </div>
+
+      <!-- Statistics Chart -->
+      <div class="card">
+        <h3>
+          <span id="panel-title">Assam State Metrics</span>
+        </h3>
+        <div style="margin-top: 6px; height: 140px; position: relative;">
+          <canvas id="lulcChart"></canvas>
+        </div>
+        <div id="stat-list" style="margin-top: 8px;"></div>
+      </div>
+
+      <!-- Legend -->
+      <div class="card">
+        <h3>Active Pseudocolor Shader Key</h3>
+        <div id="legend-items" style="display: grid; grid-template-columns: 1fr 1fr; gap: 6px; margin-top: 4px;"></div>
       </div>
     </div>
   </div>
@@ -386,248 +313,211 @@
   <script src="https://unpkg.com/leaflet@1.9.4/dist/leaflet.js"></script>
 
   <script>
-    // 1. BOUNDING BOX LOCKDOWN: Restricts pan/zoom strictly to Assam and immediate Northeast buffer
+    // 1. BOUNDING BOX: Locks camera firmly to Assam and Northeast India
     const assamBounds = L.latLngBounds(
-      L.latLng(23.5, 89.0),
-      L.latLng(28.8, 96.8)
+      L.latLng(23.6, 89.2),
+      L.latLng(28.6, 96.6)
     );
 
     const map = L.map('map', {
       center: [26.2006, 92.9376],
       zoom: window.innerWidth < 768 ? 7 : 8,
-      minZoom: 7,
+      minZoom: 6,
       maxZoom: 18,
       maxBounds: assamBounds,
       maxBoundsViscosity: 1.0,
       zoomControl: true
     });
 
-    // Google Earth Hybrid Satellite Base Layer
+    // Dedicated Panes for strict Z-ordering
+    map.createPane('rasterPane');
+    map.getPane('rasterPane').style.zIndex = 400;
+
+    map.createPane('districtPane');
+    map.getPane('districtPane').style.zIndex = 500;
+
+    // Google Satellite Base Layer
     const googleHybrid = L.tileLayer('https://mt1.google.com/vt/lyrs=y&x={x}&y={y}&z={z}', {
       maxZoom: 20,
       attribution: 'Map &copy; Google'
     }).addTo(map);
 
-    // Custom Reset State View Button Control
+    // Mobile Viewport Invalidation
+    window.addEventListener('resize', () => { map.invalidateSize(); });
+    window.addEventListener('orientationchange', () => { setTimeout(() => { map.invalidateSize(); }, 250); });
+
+    // Drawer handle collapse for mobile
+    const sidebar = document.getElementById('sidebar');
+    const drawerToggle = document.getElementById('drawer-toggle');
+    if (drawerToggle) {
+      drawerToggle.addEventListener('click', () => {
+        sidebar.classList.toggle('collapsed');
+        setTimeout(() => { map.invalidateSize(); }, 320);
+      });
+    }
+
+    // Reset View Button
     const ResetControl = L.Control.extend({
       options: { position: 'topleft' },
       onAdd: function() {
-        const btn = L.DomUtil.create('button', 'leaflet-control-reset');
+        const btn = L.DomUtil.create('button', 'leaflet-control-custom');
         btn.innerHTML = '↺ Reset View';
-        btn.title = 'Reset to Full State View';
-        L.DomEvent.disableClickPropagation(btn);
-        btn.onclick = function() {
-          setMode('state');
+        btn.onclick = () => {
+          if (districtLayer) map.fitBounds(districtLayer.getBounds(), { padding: [15, 15] });
         };
         return btn;
       }
     });
     map.addControl(new ResetControl());
 
+    let parsedGeoraster = null;
+    let rasterLayer = null;
     let districtLayer = null;
     let chartInstance = null;
     let geojsonData = null;
     let districtLookup = {};
-    let activeMode = 'state';
     let selectedDistrictName = null;
-    let globalOpacity = 0.70;
-    let activePaletteKey = 'cyberpunk';
+    let currentRasterOpacity = 0.85;
+    let currentVectorOpacity = 0.40;
+    let currentRampKey = 'qgis_viridis';
 
-    const COLOR_RAMPS = {
+    // RASTER SHADER PALETTES (Maps Band values 1 through 8 directly to colors)
+    const SHADER_PALETTES = {
+      qgis_viridis: {
+        name: "QGIS Viridis",
+        1: { hex: "#440154", label: "Dense Forest Canopy" },   // Deep Indigo
+        2: { hex: "#3b528b", label: "Tea / Agroforestry" },    // Blue
+        3: { hex: "#21918c", label: "Grassland Plains" },      // Teal
+        4: { hex: "#5ec962", label: "Cropland Agriculture" },  // Light Green
+        5: { hex: "#31688e", label: "Urban Built-up" },        // Dark Cyan
+        6: { hex: "#8fd744", label: "Sandbars / Chars" },      // Yellow Green
+        8: { hex: "#fde725", label: "River Channels & Water" } // Glowing River Yellow[cite: 24]
+      },
       cyberpunk: {
         name: "Cyberpunk Neon",
-        pct_forest:    { label: "Dense Forest Canopy",  hex: "#00e676", rgb: [0, 230, 118] },
-        pct_shrub_tea: { label: "Tea Estates & Shrub",  hex: "#aeea00", rgb: [174, 234, 0] },
-        pct_cropland:  { label: "Cropland / Agri",      hex: "#ffd600", rgb: [255, 214, 0] },
-        pct_water:     { label: "Water (Rivers/Beels)", hex: "#00e5ff", rgb: [0, 229, 255] },
-        pct_builtup:   { label: "Urban / Built-up",     hex: "#ff1744", rgb: [255, 23, 68] },
-        pct_barren:    { label: "Chars & Sandbars",     hex: "#ff6d00", rgb: [255, 109, 0] }
+        1: { hex: "#00e676", label: "Dense Forest Canopy" },
+        2: { hex: "#aeea00", label: "Tea / Agroforestry" },
+        3: { hex: "#76ff03", label: "Grassland Plains" },
+        4: { hex: "#ffd600", label: "Cropland Agriculture" },
+        5: { hex: "#ff1744", label: "Urban Built-up" },
+        6: { hex: "#ff6d00", label: "Sandbars / Chars" },
+        8: { hex: "#00e5ff", label: "River Channels & Water" }
       },
       dynamic_world: {
         name: "ESA Dynamic World",
-        pct_forest:    { label: "Dense Forest Canopy",  hex: "#397d49", rgb: [57, 125, 73] },
-        pct_shrub_tea: { label: "Tea Estates & Shrub",  hex: "#88b053", rgb: [136, 176, 83] },
-        pct_cropland:  { label: "Cropland / Agri",      hex: "#e49635", rgb: [228, 150, 53] },
-        pct_water:     { label: "Water (Rivers/Beels)", hex: "#419bdf", rgb: [65, 155, 223] },
-        pct_builtup:   { label: "Urban / Built-up",     hex: "#c4281b", rgb: [196, 40, 27] },
-        pct_barren:    { label: "Chars & Sandbars",     hex: "#a59b8f", rgb: [165, 155, 143] }
+        1: { hex: "#397d49", label: "Dense Forest Canopy" },
+        2: { hex: "#88b053", label: "Tea / Agroforestry" },
+        3: { hex: "#e49635", label: "Grassland Plains" },
+        4: { hex: "#dfc35a", label: "Cropland Agriculture" },
+        5: { hex: "#c4281b", label: "Urban Built-up" },
+        6: { hex: "#a59b8f", label: "Sandbars / Chars" },
+        8: { hex: "#419bdf", label: "River Channels & Water" }
       },
       spectral: {
-        name: "Spectral / Thermal",
-        pct_forest:    { label: "Dense Forest Canopy",  hex: "#2b83ba", rgb: [43, 131, 186] },
-        pct_shrub_tea: { label: "Tea Estates & Shrub",  hex: "#abdda4", rgb: [171, 221, 164] },
-        pct_cropland:  { label: "Cropland / Agri",      hex: "#ffffbf", rgb: [255, 255, 191] },
-        pct_water:     { label: "Water (Rivers/Beels)", hex: "#5e4fa2", rgb: [94, 79, 162] },
-        pct_builtup:   { label: "Urban / Built-up",     hex: "#d7191c", rgb: [215, 25, 28] },
-        pct_barren:    { label: "Chars & Sandbars",     hex: "#fdae61", rgb: [253, 174, 97] }
+        name: "Spectral",
+        1: { hex: "#2b83ba", label: "Dense Forest Canopy" },
+        2: { hex: "#abdda4", label: "Tea / Agroforestry" },
+        3: { hex: "#e6f598", label: "Grassland Plains" },
+        4: { hex: "#ffffbf", label: "Cropland Agriculture" },
+        5: { hex: "#d7191c", label: "Urban Built-up" },
+        6: { hex: "#fdae61", label: "Sandbars / Chars" },
+        8: { hex: "#5e4fa2", label: "River Channels & Water" }
       },
-      viridis: {
-        name: "Viridis Scientific",
-        pct_forest:    { label: "Dense Forest Canopy",  hex: "#440154", rgb: [68, 1, 84] },
-        pct_shrub_tea: { label: "Tea Estates & Shrub",  hex: "#3b528b", rgb: [59, 82, 139] },
-        pct_cropland:  { label: "Cropland / Agri",      hex: "#21918c", rgb: [33, 145, 140] },
-        pct_water:     { label: "Water (Rivers/Beels)", hex: "#5ec962", rgb: [94, 201, 98] },
-        pct_builtup:   { label: "Urban / Built-up",     hex: "#fde725", rgb: [253, 231, 37] },
-        pct_barren:    { label: "Chars & Sandbars",     hex: "#8fd744", rgb: [143, 215, 68] }
-      },
-      turbo: {
-        name: "Turbo Vibrant",
-        pct_forest:    { label: "Dense Forest Canopy",  hex: "#238823", rgb: [35, 136, 35] },
-        pct_shrub_tea: { label: "Tea Estates & Shrub",  hex: "#00d084", rgb: [0, 208, 132] },
-        pct_cropland:  { label: "Cropland / Agri",      hex: "#ffb703", rgb: [255, 183, 3] },
-        pct_water:     { label: "Water (Rivers/Beels)", hex: "#0077b6", rgb: [0, 119, 182] },
-        pct_builtup:   { label: "Urban / Built-up",     hex: "#d90429", rgb: [217, 4, 41] },
-        pct_barren:    { label: "Chars & Sandbars",     hex: "#fb8500", rgb: [251, 133, 0] }
+      magma: {
+        name: "Magma Thermal",
+        1: { hex: "#000004", label: "Dense Forest Canopy" },
+        2: { hex: "#3b0f70", label: "Tea / Agroforestry" },
+        3: { hex: "#8c2981", label: "Grassland Plains" },
+        4: { hex: "#de4968", label: "Cropland Agriculture" },
+        5: { hex: "#fe9f6d", label: "Urban Built-up" },
+        6: { hex: "#fcfdbf", label: "Sandbars / Chars" },
+        8: { hex: "#f1605d", label: "River Channels & Water" }
       }
     };
 
-    function getActivePalette() {
-      return COLOR_RAMPS[activePaletteKey];
-    }
+    // Dynamic Shader Function
+    function applyRasterShader() {
+      if (!parsedGeoraster) return;
 
-    function computeDynamicDistrictColor(p) {
-      const palette = getActivePalette();
-      let r = 0, g = 0, b = 0, totalWeight = 0;
-
-      Object.keys(palette).forEach(key => {
-        if (key === 'name') return;
-        const cls = palette[key];
-        const pct = parseFloat(p[key] || 0);
-        const weight = Math.pow(pct, 1.35);
-        r += cls.rgb[0] * weight;
-        g += cls.rgb[1] * weight;
-        b += cls.rgb[2] * weight;
-        totalWeight += weight;
-      });
-
-      if (totalWeight === 0) return palette.pct_cropland.hex;
-      r = Math.round(Math.min(255, r / totalWeight));
-      g = Math.round(Math.min(255, g / totalWeight));
-      b = Math.round(Math.min(255, b / totalWeight));
-
-      return `rgb(${r}, ${g}, ${b})`;
-    }
-
-    function getDistrictDominantClass(p) {
-      const palette = getActivePalette();
-      let maxVal = -1;
-      let dominantKey = 'pct_forest';
-
-      Object.keys(palette).forEach(key => {
-        if (key === 'name') return;
-        const val = parseFloat(p[key] || 0);
-        if (val > maxVal) {
-          maxVal = val;
-          dominantKey = key;
-        }
-      });
-      return palette[dominantKey];
-    }
-
-    function getFeatureStyle(feature) {
-      const p = feature.properties || {};
-      const dName = p.name || p.DISTRICT || p.district;
-      const isSelected = (selectedDistrictName === dName);
-      const dynamicColor = computeDynamicDistrictColor(p);
-
-      if (activeMode === 'state') {
-        return {
-          fillColor: dynamicColor,
-          weight: 1.4,
-          opacity: 0.9,
-          color: '#ffffff',
-          dashArray: '',
-          fillOpacity: globalOpacity * 0.85
-        };
-      } else if (activeMode === 'all') {
-        return {
-          fillColor: dynamicColor,
-          weight: isSelected ? 4 : 1.8,
-          opacity: 1,
-          color: isSelected ? '#00e5ff' : '#ffffff',
-          dashArray: isSelected ? '' : '1',
-          fillOpacity: isSelected ? Math.min(1.0, globalOpacity + 0.25) : globalOpacity
-        };
-      } else {
-        if (isSelected) {
-          return {
-            fillColor: dynamicColor,
-            weight: 4,
-            opacity: 1,
-            color: '#00e5ff',
-            dashArray: '',
-            fillOpacity: Math.min(1.0, globalOpacity + 0.3)
-          };
-        } else {
-          return {
-            fillColor: dynamicColor,
-            weight: 1.2,
-            opacity: 0.5,
-            color: '#94a3b8',
-            dashArray: '3',
-            fillOpacity: 0.15
-          };
-        }
+      if (rasterLayer) {
+        map.removeLayer(rasterLayer);
       }
+
+      const activeShader = SHADER_PALETTES[currentRampKey];
+
+      rasterLayer = new GeoRasterLayer({
+        georaster: parsedGeoraster,
+        opacity: currentRasterOpacity,
+        pane: 'rasterPane',
+        pixelValuesToColorFn: values => {
+          const val = Math.round(values[0]);
+          if (val === 0 || !activeShader[val]) {
+            return null; // Transparent for background/NoData[cite: 9]
+          }
+          return activeShader[val].hex;
+        },
+        resolution: 256
+      });
+
+      rasterLayer.addTo(map);
+      updateLegend();
     }
 
     function updateLegend() {
-      const palette = getActivePalette();
+      const shader = SHADER_PALETTES[currentRampKey];
       let html = '';
-      Object.keys(palette).forEach(k => {
-        if (k === 'name') return;
-        const item = palette[k];
+      Object.keys(shader).forEach(code => {
+        if (code === 'name') return;
+        const item = shader[code];
         html += `
-          <div class="stat-tag">
-            <span class="stat-pill" style="background: ${item.hex};"></span>
-            <span style="font-size:0.75rem;">${item.label}</span>
+          <div class="stat-row" style="border: none; padding: 2px 0;">
+            <div class="stat-tag">
+              <span class="stat-pill" style="background: ${item.hex};"></span>
+              <span style="font-size:0.73rem;">${item.label}</span>
+            </div>
+            <span style="font-size:0.7rem; color:#64748b;">(Class ${code})</span>
           </div>
         `;
       });
       document.getElementById('legend-items').innerHTML = html;
     }
 
-    function updateMetricsPanel(title, subtitle, properties, isStatewide = false) {
+    function updateChart(title, properties) {
       document.getElementById('panel-title').innerText = title;
-      document.getElementById('panel-meta').innerText = subtitle;
 
-      const palette = getActivePalette();
-      const badge = document.getElementById('dominant-badge');
+      const labels = ['Forest', 'Tea/Agro', 'Cropland', 'Water', 'Built-up', 'Barren'];
+      const values = [
+        parseFloat(properties.pct_forest || 0),
+        parseFloat(properties.pct_shrub_tea || 0),
+        parseFloat(properties.pct_cropland || 0),
+        parseFloat(properties.pct_water || 0),
+        parseFloat(properties.pct_builtup || 0),
+        parseFloat(properties.pct_barren || 0)
+      ];
 
-      if (isStatewide) {
-        badge.innerText = 'Statewide';
-        badge.style.background = '#0284c7';
-      } else {
-        const dominant = getDistrictDominantClass(properties);
-        badge.innerText = `Dominant: ${dominant.label.split('/')[0]}`;
-        badge.style.background = dominant.hex;
-      }
+      const activeShader = SHADER_PALETTES[currentRampKey];
+      const colors = [
+        activeShader[1].hex,
+        activeShader[2].hex,
+        activeShader[4].hex,
+        activeShader[8].hex,
+        activeShader[5].hex,
+        activeShader[6].hex
+      ];
 
-      const values = [];
-      const labels = [];
-      const colors = [];
-      let statListHtml = '';
-
-      Object.keys(palette).forEach(k => {
-        if (k === 'name') return;
-        const c = palette[k];
-        const val = parseFloat(properties[k] ?? 0);
-        values.push(val);
-        labels.push(c.label);
-        colors.push(c.hex);
-
-        statListHtml += `
+      let statHtml = '';
+      labels.forEach((label, idx) => {
+        statHtml += `
           <div class="stat-row">
             <div class="stat-tag">
-              <span class="stat-pill" style="background: ${c.hex};"></span>
-              <span>${c.label}</span>
+              <span class="stat-pill" style="background: ${colors[idx]};"></span>
+              <span>${label}</span>
             </div>
-            <span class="stat-val">${val.toFixed(1)}%</span>
+            <span class="stat-val">${values[idx].toFixed(1)}%</span>
           </div>
         `;
       });
-
-      document.getElementById('stat-list').innerHTML = statListHtml;
+      document.getElementById('stat-list').innerHTML = statHtml;
 
       const ctx = document.getElementById('lulcChart').getContext('2d');
       if (chartInstance) chartInstance.destroy();
@@ -636,42 +526,14 @@
         type: 'doughnut',
         data: {
           labels: labels,
-          datasets: [{
-            data: values,
-            backgroundColor: colors,
-            borderWidth: 0,
-            hoverOffset: 4
-          }]
+          datasets: [{ data: values, backgroundColor: colors, borderWidth: 0 }]
         },
         options: {
           responsive: true,
           maintainAspectRatio: false,
-          plugins: {
-            legend: { display: false }
-          }
+          plugins: { legend: { display: false } }
         }
       });
-    }
-
-    function computeStatewideAverages() {
-      if (!geojsonData) return;
-      const palette = getActivePalette();
-      const stateTotals = {};
-      Object.keys(palette).forEach(k => { if (k !== 'name') stateTotals[k] = 0; });
-      const totalDistricts = geojsonData.features.length;
-
-      geojsonData.features.forEach(f => {
-        Object.keys(palette).forEach(k => {
-          if (k !== 'name') stateTotals[k] += parseFloat(f.properties[k] || 0);
-        });
-      });
-
-      const stateAverages = {};
-      Object.keys(palette).forEach(k => {
-        if (k !== 'name') stateAverages[k] = (stateTotals[k] / totalDistricts).toFixed(2);
-      });
-
-      updateMetricsPanel("State of Assam", "Aggregated State-wide Coverage Ratios", stateAverages, true);
     }
 
     function selectDistrict(name) {
@@ -679,74 +541,51 @@
       const item = districtLookup[name];
       if (!item) return;
 
-      if (districtLayer) districtLayer.setStyle(getFeatureStyle);
+      if (districtLayer) {
+        districtLayer.setStyle(f => ({
+          pane: 'districtPane',
+          fillColor: '#000000',
+          fillOpacity: 0.05,
+          weight: (f.properties?.name || f.properties?.DISTRICT) === name ? 3.5 : 1.2,
+          color: (f.properties?.name || f.properties?.DISTRICT) === name ? '#38bdf8' : '#ffffff',
+          opacity: currentVectorOpacity
+        }));
+      }
+
       item.layer.bringToFront();
 
-      const paddingBottom = window.innerWidth < 768 ? 240 : 40;
+      const isMobilePortrait = (window.innerWidth < 768 && window.innerHeight > window.innerWidth);
+      const paddingBottom = isMobilePortrait ? 220 : 30;
+
       map.fitBounds(item.layer.getBounds(), {
-        paddingTopLeft: [30, 30],
-        paddingBottomRight: [30, paddingBottom]
+        paddingTopLeft: [20, 20],
+        paddingBottomRight: [20, paddingBottom]
       });
 
-      updateMetricsPanel(name, "District LULC Coverage Distribution", item.feature.properties, false);
+      updateChart(name, item.feature.properties);
       document.getElementById('district-dropdown').value = name;
     }
 
-    function onEachFeature(feature, layer) {
-      const p = feature.properties || {};
-      const dName = p.name || p.DISTRICT || p.district || "Assam District";
-      districtLookup[dName] = { layer, feature };
-
-      layer.on({
-        mouseover: (e) => {
-          if (activeMode !== 'state' && window.innerWidth >= 768) {
-            e.target.setStyle({ weight: 4, color: '#00e5ff' });
-            e.target.bringToFront();
-          }
-        },
-        mouseout: (e) => {
-          if (activeMode !== 'state' && window.innerWidth >= 768) {
-            districtLayer.resetStyle(e.target);
-            if (selectedDistrictName && districtLookup[selectedDistrictName]) {
-              districtLookup[selectedDistrictName].layer.bringToFront();
-            }
-          }
-        },
-        click: (e) => {
-          if (activeMode === 'state') setMode('all');
-          selectDistrict(dName);
-        }
+    // 2. Fetch and apply shader to Assam_LULC_2026.tif[cite: 2]
+    fetch('Assam_LULC_2026.tif')
+      .then(res => {
+        if (!res.ok) throw new Error("Could not find Assam_LULC_2026.tif in repository.");
+        return res.arrayBuffer();
+      })
+      .then(parseGeoraster)
+      .then(georaster => {
+        parsedGeoraster = georaster;
+        document.getElementById('status-badge').innerText = 'Raster Shader Active';
+        document.getElementById('status-badge').style.background = '#15803d';
+        applyRasterShader();
+      })
+      .catch(err => {
+        console.error(err);
+        document.getElementById('status-badge').innerText = 'Raster Error (Verify File)';
+        document.getElementById('status-badge').style.background = '#b91c1c';
       });
-    }
 
-    function setMode(mode) {
-      activeMode = mode;
-      document.querySelectorAll('.tab-btn').forEach(btn => btn.classList.remove('active'));
-
-      if (mode === 'state') {
-        document.getElementById('tab-state').classList.add('active');
-        selectedDistrictName = null;
-        document.getElementById('district-dropdown').value = '';
-        computeStatewideAverages();
-        if (districtLayer) {
-          map.fitBounds(districtLayer.getBounds(), { padding: [20, 20] });
-          districtLayer.setStyle(getFeatureStyle);
-        }
-      } else if (mode === 'all') {
-        document.getElementById('tab-all-districts').classList.add('active');
-        if (districtLayer) districtLayer.setStyle(getFeatureStyle);
-        if (selectedDistrictName) selectDistrict(selectedDistrictName);
-      } else if (mode === 'focus') {
-        document.getElementById('tab-focus-district').classList.add('active');
-        if (!selectedDistrictName && geojsonData?.features.length > 0) {
-          const first = geojsonData.features[0].properties;
-          selectedDistrictName = first.name || first.DISTRICT || first.district;
-        }
-        if (selectedDistrictName) selectDistrict(selectedDistrictName);
-      }
-    }
-
-    // Load GeoJSON Dataset
+    // 3. Load District Outlines[cite: 2]
     fetch('assam_districts.geojson.json')
       .then(res => res.json())
       .then(data => {
@@ -767,60 +606,62 @@
         });
 
         districtLayer = L.geoJSON(data, {
-          style: getFeatureStyle,
-          onEachFeature: onEachFeature
+          pane: 'districtPane',
+          style: {
+            fillColor: '#000000',
+            fillOpacity: 0.05,
+            weight: 1.2,
+            opacity: currentVectorOpacity,
+            color: '#ffffff',
+            dashArray: '2'
+          },
+          onEachFeature: (feature, layer) => {
+            const name = feature.properties?.name || feature.properties?.DISTRICT;
+            districtLookup[name] = { layer, feature };
+            layer.on('click', () => selectDistrict(name));
+          }
         }).addTo(map);
 
-        updateLegend();
-        computeStatewideAverages();
+        if (data.features.length > 0) {
+          updateChart("Assam State Average", data.features[0].properties);
+        }
       })
-      .catch(err => console.error("Error loading GeoJSON:", err));
+      .catch(err => console.error("Error loading district GeoJSON:", err));
 
-    // Ramp Selector
-    document.getElementById('ramp-select').addEventListener('change', (e) => {
-      activePaletteKey = e.target.value;
-      updateLegend();
-      if (districtLayer) districtLayer.setStyle(getFeatureStyle);
-
-      if (activeMode === 'state' || !selectedDistrictName) {
-        computeStatewideAverages();
+    // Basemap Toggle Handler
+    document.getElementById('basemap-toggle').addEventListener('change', (e) => {
+      if (e.target.checked) {
+        if (!map.hasLayer(googleHybrid)) map.addLayer(googleHybrid);
       } else {
-        const item = districtLookup[selectedDistrictName];
-        if (item) updateMetricsPanel(selectedDistrictName, "District LULC Coverage Distribution", item.feature.properties, false);
+        if (map.hasLayer(googleHybrid)) map.removeLayer(googleHybrid);
       }
     });
 
-    // Tab Listeners
-    document.getElementById('tab-state').addEventListener('click', () => setMode('state'));
-    document.getElementById('tab-all-districts').addEventListener('click', () => setMode('all'));
-    document.getElementById('tab-focus-district').addEventListener('click', () => setMode('focus'));
+    // Controls Event Listeners
+    document.getElementById('raster-ramp-select').addEventListener('change', (e) => {
+      currentRampKey = e.target.value;
+      applyRasterShader();
+      if (selectedDistrictName && districtLookup[selectedDistrictName]) {
+        updateChart(selectedDistrictName, districtLookup[selectedDistrictName].feature.properties);
+      }
+    });
 
-    // Dropdown change listener
     document.getElementById('district-dropdown').addEventListener('change', (e) => {
-      const name = e.target.value;
-      if (name) {
-        if (activeMode === 'state') setMode('focus');
-        selectDistrict(name);
+      if (e.target.value) selectDistrict(e.target.value);
+    });
+
+    document.getElementById('raster-opacity').addEventListener('input', (e) => {
+      currentRasterOpacity = parseFloat(e.target.value);
+      document.getElementById('raster-opacity-val').innerText = `${Math.round(currentRasterOpacity * 100)}%`;
+      if (rasterLayer) rasterLayer.setOpacity(currentRasterOpacity);
+    });
+
+    document.getElementById('vector-opacity').addEventListener('input', (e) => {
+      currentVectorOpacity = parseFloat(e.target.value);
+      document.getElementById('vector-opacity-val').innerText = `${Math.round(currentVectorOpacity * 100)}%`;
+      if (districtLayer) {
+        districtLayer.setStyle({ opacity: currentVectorOpacity });
       }
-    });
-
-    // Opacity Slider listener
-    document.getElementById('layer-opacity').addEventListener('input', (e) => {
-      globalOpacity = parseFloat(e.target.value);
-      document.getElementById('opacity-val').innerText = `${Math.round(globalOpacity * 100)}%`;
-      if (districtLayer) districtLayer.setStyle(getFeatureStyle);
-    });
-
-    // Modal Control Listeners
-    const modal = document.getElementById('info-modal');
-    document.getElementById('open-info-modal').addEventListener('click', () => {
-      modal.style.display = 'flex';
-    });
-    document.getElementById('close-info-modal').addEventListener('click', () => {
-      modal.style.display = 'none';
-    });
-    window.addEventListener('click', (e) => {
-      if (e.target === modal) modal.style.display = 'none';
     });
   </script>
 </body>
