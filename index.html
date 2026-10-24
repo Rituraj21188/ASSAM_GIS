@@ -3,7 +3,7 @@
 <head>
   <meta charset="UTF-8" />
   <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no, viewport-fit=cover" />
-  <title>Assam 2026 LULC GeoTIFF Pseudo-Color Portal</title>
+  <title>Assam 2026 LULC Analytics Portal</title>
 
   <!-- Leaflet CSS -->
   <link rel="stylesheet" href="https://unpkg.com/leaflet@1.9.4/dist/leaflet.css" />
@@ -20,7 +20,7 @@
       width: 100%;
       height: 100%;
       height: 100dvh;
-      background: #050811;
+      background: #040711;
       color: #f1f5f9;
       overflow: hidden;
       font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, sans-serif;
@@ -43,7 +43,7 @@
 
     /* Desktop Sidebar */
     #sidebar {
-      width: 430px;
+      width: 440px;
       height: 100%;
       background: rgba(8, 12, 24, 0.96);
       backdrop-filter: blur(16px);
@@ -59,12 +59,31 @@
     }
 
     .header-box { display: flex; justify-content: space-between; align-items: flex-start; }
-    h2 { font-size: 1.2rem; font-weight: 700; color: #38bdf8; letter-spacing: -0.02em; }
+    h2 { font-size: 1.22rem; font-weight: 700; color: #38bdf8; letter-spacing: -0.02em; }
     p.subtext { font-size: 0.76rem; color: #94a3b8; }
 
+    .header-actions { display: flex; gap: 6px; align-items: center; }
+
+    .btn-info {
+      background: #1e293b;
+      border: 1px solid #38bdf8;
+      color: #38bdf8;
+      border-radius: 50%;
+      width: 28px;
+      height: 28px;
+      font-weight: 700;
+      font-size: 0.85rem;
+      cursor: pointer;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      transition: all 0.2s;
+    }
+    .btn-info:hover { background: #0284c7; color: white; }
+
     #status-badge {
-      font-size: 0.7rem;
-      padding: 4px 8px;
+      font-size: 0.68rem;
+      padding: 3px 7px;
       border-radius: 4px;
       background: #0284c7;
       color: white;
@@ -92,6 +111,16 @@
       align-items: center;
     }
 
+    .badge {
+      font-size: 0.68rem;
+      padding: 3px 7px;
+      border-radius: 4px;
+      font-weight: 600;
+      background: #0284c7;
+      color: #ffffff;
+      text-transform: none;
+    }
+
     .input-label { font-size: 0.74rem; color: #94a3b8; display: block; margin-bottom: 4px; font-weight: 600; }
 
     select {
@@ -116,14 +145,12 @@
     }
     input[type="range"] { accent-color: #38bdf8; cursor: pointer; }
 
-    /* Custom Toggle Switch */
     .switch-row {
       display: flex;
       justify-content: space-between;
       align-items: center;
       font-size: 0.78rem;
       color: #cbd5e1;
-      padding: 2px 0;
     }
     .switch {
       position: relative;
@@ -161,7 +188,21 @@
     .stat-row:last-child { border-bottom: none; }
     .stat-tag { display: flex; align-items: center; gap: 8px; }
     .stat-pill { width: 11px; height: 11px; border-radius: 2px; flex-shrink: 0; }
-    .stat-val { font-weight: 700; color: #f8fafc; }
+    .stat-val { font-weight: 700; color: #f8fafc; font-feature-settings: "tnum"; }
+
+    .btn-3d {
+      display: block;
+      text-align: center;
+      background: linear-gradient(135deg, #0284c7, #2563eb);
+      color: white;
+      text-decoration: none;
+      padding: 10px 14px;
+      border-radius: 8px;
+      font-weight: 600;
+      font-size: 0.82rem;
+      transition: opacity 0.2s;
+    }
+    .btn-3d:hover { opacity: 0.9; }
 
     .leaflet-control-custom {
       background: #0f172a;
@@ -173,6 +214,35 @@
       border-radius: 4px;
       cursor: pointer;
       box-shadow: 0 2px 8px rgba(0,0,0,0.5);
+    }
+
+    /* Modal */
+    #info-modal {
+      display: none;
+      position: fixed;
+      inset: 0;
+      background: rgba(0, 0, 0, 0.75);
+      backdrop-filter: blur(8px);
+      z-index: 3000;
+      align-items: center;
+      justify-content: center;
+      padding: 20px;
+    }
+    .modal-content {
+      background: #0f172a;
+      border: 1px solid #334155;
+      border-radius: 12px;
+      max-width: 540px;
+      width: 100%;
+      padding: 22px;
+      position: relative;
+      max-height: 85vh;
+      overflow-y: auto;
+    }
+    .modal-close {
+      position: absolute; top: 14px; right: 14px;
+      background: #1e293b; border: none; color: #94a3b8;
+      width: 28px; height: 28px; border-radius: 6px; cursor: pointer;
     }
 
     /* -------------------------------------------------------------
@@ -204,7 +274,6 @@
         cursor: pointer;
         margin-bottom: 4px;
       }
-
       .drawer-handle-bar { width: 44px; height: 5px; background: #475569; border-radius: 3px; }
     }
 
@@ -215,7 +284,6 @@
         position: relative; width: 320px; height: 100%; max-height: 100vh;
         border-top: none; border-left: 2px solid rgba(56, 189, 248, 0.4);
         border-radius: 0; padding: 12px;
-        box-shadow: -8px 0 24px rgba(0, 0, 0, 0.85);
         transform: none !important;
       }
       .mobile-toggle-btn { display: none !important; }
@@ -235,10 +303,28 @@
 
       <div class="header-box">
         <div>
-          <h2>Assam LULC GeoTIFF Shader</h2>
-          <p class="subtext">Dynamic In-Browser Raster Pseudocolor Engine</p>
-          <span id="status-badge">Streaming GeoTIFF...</span>
+          <h2>Assam LULC Explorer</h2>
+          <p class="subtext">Multi-Scale Earth Observation & Dynamic Cartography</p>
+          <span id="status-badge">Loading GeoTIFF...</span>
         </div>
+        <div class="header-actions">
+          <button class="btn-info" id="open-info-modal" title="About LULC">i</button>
+        </div>
+      </div>
+
+      <!-- Color Ramp GeoTIFF Switcher -->
+      <div class="card">
+        <label class="input-label" for="raster-ramp-select">🎨 Rendered GeoTIFF Layer:</label>
+        <select id="raster-ramp-select">
+          <option value="assam_lulc_viridis.tif" selected>🟢 Viridis (Glowing River / Canopy)</option>
+          <option value="assam_lulc_turbo.tif">🔥 Turbo (High Chroma Spectrum)</option>
+          <option value="assam_lulc_Magma.tif">🌋 Magma (Thermal River Contrast)</option>
+          <option value="assam_lulc_Plasma.tif">⚡ Plasma (Neon Violet & Amber)</option>
+          <option value="assam_lulc_Cividis.tif">👁️ Cividis (Colorblind-Safe Navy/Gold)</option>
+          <option value="assam_lulc_Spectral.tif">🌈 Spectral (Full Multi-Band Gradient)</option>
+          <option value="assam_lulc_BrBG.tif">🍂 BrBG (Brown Chars / Blue-Green Water)</option>
+          <option value="assam_lulc_PRGn.tif">🌿 PRGn (Purple Hills / Green Cropland)</option>
+        </select>
       </div>
 
       <!-- Basemap Toggle Card -->
@@ -250,22 +336,9 @@
             <span class="slider"></span>
           </label>
         </div>
-        <p style="font-size:0.7rem; color:#64748b; margin-top:4px;">Toggle OFF to isolate the pure raster on a dark backdrop (QGIS Mode).</p>
       </div>
 
-      <!-- Pseudocolor Ramp Selector -->
-      <div class="card">
-        <label class="input-label" for="raster-ramp-select">🎨 GeoTIFF Pseudocolor Ramp:</label>
-        <select id="raster-ramp-select">
-          <option value="qgis_viridis" selected>🟢 QGIS Viridis (Fluorescent Rivers & Canopy)</option>
-          <option value="cyberpunk">⚡ Cyberpunk Neon (High Contrast)</option>
-          <option value="dynamic_world">🌍 ESA Dynamic World Standard</option>
-          <option value="spectral">🌈 Spectral Continuous</option>
-          <option value="magma">🌋 Magma / Thermal Glow</option>
-        </select>
-      </div>
-
-      <!-- District Selection -->
+      <!-- District Selection Dropdown -->
       <div class="card">
         <label class="input-label" for="district-dropdown">Inspect District:</label>
         <select id="district-dropdown">
@@ -273,7 +346,7 @@
         </select>
       </div>
 
-      <!-- Transparency Sliders -->
+      <!-- Dual Opacity Sliders -->
       <div class="card">
         <div class="slider-box">
           <div style="display: flex; justify-content: space-between;">
@@ -285,27 +358,65 @@
         <div class="slider-box" style="margin-top: 8px;">
           <div style="display: flex; justify-content: space-between;">
             <span>District Boundary Outlines</span>
-            <span id="vector-opacity-val">40%</span>
+            <span id="vector-opacity-val">45%</span>
           </div>
-          <input type="range" id="vector-opacity" min="0" max="1" step="0.05" value="0.40" />
+          <input type="range" id="vector-opacity" min="0" max="1" step="0.05" value="0.45" />
         </div>
       </div>
+
+      <a href="three_view.html" class="btn-3d">Switch to 3D Extruded Model &rarr;</a>
 
       <!-- Statistics Chart -->
       <div class="card">
         <h3>
           <span id="panel-title">Assam State Metrics</span>
+          <span id="dominant-badge" class="badge">Statewide</span>
         </h3>
+        <p id="panel-meta" class="subtext">Aggregated LULC distribution across Assam</p>
+        
         <div style="margin-top: 6px; height: 140px; position: relative;">
           <canvas id="lulcChart"></canvas>
         </div>
         <div id="stat-list" style="margin-top: 8px;"></div>
       </div>
 
-      <!-- Legend -->
+      <!-- Classification Key -->
       <div class="card">
-        <h3>Active Pseudocolor Shader Key</h3>
-        <div id="legend-items" style="display: grid; grid-template-columns: 1fr 1fr; gap: 6px; margin-top: 4px;"></div>
+        <h3>LULC Feature Reference</h3>
+        <div style="display: grid; grid-template-columns: 1fr 1fr; gap: 6px; margin-top: 4px;">
+          <div class="stat-tag"><span class="stat-pill" style="background: #2b83ba;"></span> <span style="font-size:0.73rem;">River / Wetlands</span></div>
+          <div class="stat-tag"><span class="stat-pill" style="background: #fdae61;"></span> <span style="font-size:0.73rem;">Chars & Sandbars</span></div>
+          <div class="stat-tag"><span class="stat-pill" style="background: #fed976;"></span> <span style="font-size:0.73rem;">Cropland Plains</span></div>
+          <div class="stat-tag"><span class="stat-pill" style="background: #78c679;"></span> <span style="font-size:0.73rem;">Tea & Shrubland</span></div>
+          <div class="stat-tag"><span class="stat-pill" style="background: #e31a1c;"></span> <span style="font-size:0.73rem;">Urban Built-up</span></div>
+          <div class="stat-tag"><span class="stat-pill" style="background: #1b7837;"></span> <span style="font-size:0.73rem;">Dense Canopy</span></div>
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <!-- About LULC Modal -->
+  <div id="info-modal">
+    <div class="modal-content">
+      <button class="modal-close" id="close-info-modal">&times;</button>
+      <h3 style="color: #38bdf8; margin-bottom: 10px;">Land Use & Land Cover (LULC) Guide</h3>
+      <p style="font-size: 0.82rem; line-height: 1.5; color: #cbd5e1; margin-bottom: 12px;">
+        LULC datasets combine physical satellite earth observations with functional socioeconomic land management classifications.
+      </p>
+
+      <div style="background: #1e293b; padding: 10px; border-radius: 6px; margin-bottom: 8px;">
+        <strong style="color: #f8fafc; font-size: 0.82rem;">1. Land Cover (Biophysical Form):</strong>
+        <p style="margin: 3px 0 0 0; font-size: 0.78rem; color: #94a3b8;">What Earth observation sensors physically detect on the terrain: dense forest canopy, perennial river channels, braided sandbars, and bare earth.</p>
+      </div>
+
+      <div style="background: #1e293b; padding: 10px; border-radius: 6px; margin-bottom: 8px;">
+        <strong style="color: #f8fafc; font-size: 0.82rem;">2. Land Use (Anthropogenic Function):</strong>
+        <p style="margin: 3px 0 0 0; font-size: 0.78rem; color: #94a3b8;">How humans exploit and manage that physical cover: commercial tea plantations, intensive paddy agriculture, and urban infrastructure.</p>
+      </div>
+
+      <div style="background: #1e293b; padding: 10px; border-radius: 6px;">
+        <strong style="color: #f8fafc; font-size: 0.82rem;">Significance for Assam:</strong>
+        <p style="margin: 3px 0 0 0; font-size: 0.78rem; color: #94a3b8;">Critical for monitoring shifting Brahmaputra river chars, wetland flood retention capacities, agricultural acreage, and forest buffer corridors.</p>
       </div>
     </div>
   </div>
@@ -313,7 +424,7 @@
   <script src="https://unpkg.com/leaflet@1.9.4/dist/leaflet.js"></script>
 
   <script>
-    // 1. BOUNDING BOX: Locks camera firmly to Assam and Northeast India
+    // Bounding Box to keep view centered around Assam
     const assamBounds = L.latLngBounds(
       L.latLng(23.6, 89.2),
       L.latLng(28.6, 96.6)
@@ -363,14 +474,19 @@
         const btn = L.DomUtil.create('button', 'leaflet-control-custom');
         btn.innerHTML = '↺ Reset View';
         btn.onclick = () => {
-          if (districtLayer) map.fitBounds(districtLayer.getBounds(), { padding: [15, 15] });
+          selectedDistrictName = null;
+          document.getElementById('district-dropdown').value = '';
+          if (districtLayer) {
+            districtLayer.resetStyle();
+            map.fitBounds(districtLayer.getBounds(), { padding: [15, 15] });
+          }
+          computeStatewideAverages();
         };
         return btn;
       }
     });
     map.addControl(new ResetControl());
 
-    let parsedGeoraster = null;
     let rasterLayer = null;
     let districtLayer = null;
     let chartInstance = null;
@@ -378,142 +494,75 @@
     let districtLookup = {};
     let selectedDistrictName = null;
     let currentRasterOpacity = 0.85;
-    let currentVectorOpacity = 0.40;
-    let currentRampKey = 'qgis_viridis';
+    let currentVectorOpacity = 0.45;
 
-    // RASTER SHADER PALETTES (Maps Band values 1 through 8 directly to colors)
-    const SHADER_PALETTES = {
-      qgis_viridis: {
-        name: "QGIS Viridis",
-        1: { hex: "#440154", label: "Dense Forest Canopy" },   // Deep Indigo
-        2: { hex: "#3b528b", label: "Tea / Agroforestry" },    // Blue
-        3: { hex: "#21918c", label: "Grassland Plains" },      // Teal
-        4: { hex: "#5ec962", label: "Cropland Agriculture" },  // Light Green
-        5: { hex: "#31688e", label: "Urban Built-up" },        // Dark Cyan
-        6: { hex: "#8fd744", label: "Sandbars / Chars" },      // Yellow Green
-        8: { hex: "#fde725", label: "River Channels & Water" } // Glowing River Yellow[cite: 24]
-      },
-      cyberpunk: {
-        name: "Cyberpunk Neon",
-        1: { hex: "#00e676", label: "Dense Forest Canopy" },
-        2: { hex: "#aeea00", label: "Tea / Agroforestry" },
-        3: { hex: "#76ff03", label: "Grassland Plains" },
-        4: { hex: "#ffd600", label: "Cropland Agriculture" },
-        5: { hex: "#ff1744", label: "Urban Built-up" },
-        6: { hex: "#ff6d00", label: "Sandbars / Chars" },
-        8: { hex: "#00e5ff", label: "River Channels & Water" }
-      },
-      dynamic_world: {
-        name: "ESA Dynamic World",
-        1: { hex: "#397d49", label: "Dense Forest Canopy" },
-        2: { hex: "#88b053", label: "Tea / Agroforestry" },
-        3: { hex: "#e49635", label: "Grassland Plains" },
-        4: { hex: "#dfc35a", label: "Cropland Agriculture" },
-        5: { hex: "#c4281b", label: "Urban Built-up" },
-        6: { hex: "#a59b8f", label: "Sandbars / Chars" },
-        8: { hex: "#419bdf", label: "River Channels & Water" }
-      },
-      spectral: {
-        name: "Spectral",
-        1: { hex: "#2b83ba", label: "Dense Forest Canopy" },
-        2: { hex: "#abdda4", label: "Tea / Agroforestry" },
-        3: { hex: "#e6f598", label: "Grassland Plains" },
-        4: { hex: "#ffffbf", label: "Cropland Agriculture" },
-        5: { hex: "#d7191c", label: "Urban Built-up" },
-        6: { hex: "#fdae61", label: "Sandbars / Chars" },
-        8: { hex: "#5e4fa2", label: "River Channels & Water" }
-      },
-      magma: {
-        name: "Magma Thermal",
-        1: { hex: "#000004", label: "Dense Forest Canopy" },
-        2: { hex: "#3b0f70", label: "Tea / Agroforestry" },
-        3: { hex: "#8c2981", label: "Grassland Plains" },
-        4: { hex: "#de4968", label: "Cropland Agriculture" },
-        5: { hex: "#fe9f6d", label: "Urban Built-up" },
-        6: { hex: "#fcfdbf", label: "Sandbars / Chars" },
-        8: { hex: "#f1605d", label: "River Channels & Water" }
-      }
-    };
+    const classes = [
+      { key: 'pct_forest', label: 'Dense Canopy', color: '#1b7837' },
+      { key: 'pct_shrub_tea', label: 'Tea & Shrubland', color: '#78c679' },
+      { key: 'pct_cropland', label: 'Cropland Plains', color: '#fed976' },
+      { key: 'pct_water', label: 'River / Wetlands', color: '#2b83ba' },
+      { key: 'pct_builtup', label: 'Urban Built-up', color: '#e31a1c' },
+      { key: 'pct_barren', label: 'Chars & Sandbars', color: '#fdae61' }
+    ];
 
-    // Dynamic Shader Function
-    function applyRasterShader() {
-      if (!parsedGeoraster) return;
+    // DYNAMIC TIFF LOADER: Fetches and mounts the selected GeoTIFF file
+    function loadGeoTiffLayer(tifFilename) {
+      const badge = document.getElementById('status-badge');
+      badge.innerText = 'Rendering GeoTIFF...';
+      badge.style.background = '#0284c7';
 
-      if (rasterLayer) {
-        map.removeLayer(rasterLayer);
-      }
-
-      const activeShader = SHADER_PALETTES[currentRampKey];
-
-      rasterLayer = new GeoRasterLayer({
-        georaster: parsedGeoraster,
-        opacity: currentRasterOpacity,
-        pane: 'rasterPane',
-        pixelValuesToColorFn: values => {
-          const val = Math.round(values[0]);
-          if (val === 0 || !activeShader[val]) {
-            return null; // Transparent for background/NoData[cite: 9]
+      fetch(tifFilename)
+        .then(res => {
+          if (!res.ok) throw new Error("Could not find " + tifFilename);
+          return res.arrayBuffer();
+        })
+        .then(parseGeoraster)
+        .then(georaster => {
+          if (rasterLayer) {
+            map.removeLayer(rasterLayer);
           }
-          return activeShader[val].hex;
-        },
-        resolution: 256
-      });
 
-      rasterLayer.addTo(map);
-      updateLegend();
+          rasterLayer = new GeoRasterLayer({
+            georaster: georaster,
+            opacity: currentRasterOpacity,
+            pane: 'rasterPane',
+            resolution: 256
+          });
+
+          rasterLayer.addTo(map);
+          badge.innerText = 'GeoTIFF Active';
+          badge.style.background = '#15803d';
+        })
+        .catch(err => {
+          console.error(err);
+          badge.innerText = 'TIFF Load Error';
+          badge.style.background = '#b91c1c';
+        });
     }
 
-    function updateLegend() {
-      const shader = SHADER_PALETTES[currentRampKey];
-      let html = '';
-      Object.keys(shader).forEach(code => {
-        if (code === 'name') return;
-        const item = shader[code];
-        html += `
-          <div class="stat-row" style="border: none; padding: 2px 0;">
-            <div class="stat-tag">
-              <span class="stat-pill" style="background: ${item.hex};"></span>
-              <span style="font-size:0.73rem;">${item.label}</span>
-            </div>
-            <span style="font-size:0.7rem; color:#64748b;">(Class ${code})</span>
-          </div>
-        `;
-      });
-      document.getElementById('legend-items').innerHTML = html;
-    }
-
-    function updateChart(title, properties) {
+    function updateChart(title, subtitle, properties, isStatewide = false) {
       document.getElementById('panel-title').innerText = title;
+      document.getElementById('panel-meta').innerText = subtitle;
+      document.getElementById('dominant-badge').innerText = isStatewide ? 'Statewide' : 'District';
 
-      const labels = ['Forest', 'Tea/Agro', 'Cropland', 'Water', 'Built-up', 'Barren'];
-      const values = [
-        parseFloat(properties.pct_forest || 0),
-        parseFloat(properties.pct_shrub_tea || 0),
-        parseFloat(properties.pct_cropland || 0),
-        parseFloat(properties.pct_water || 0),
-        parseFloat(properties.pct_builtup || 0),
-        parseFloat(properties.pct_barren || 0)
-      ];
-
-      const activeShader = SHADER_PALETTES[currentRampKey];
-      const colors = [
-        activeShader[1].hex,
-        activeShader[2].hex,
-        activeShader[4].hex,
-        activeShader[8].hex,
-        activeShader[5].hex,
-        activeShader[6].hex
-      ];
-
+      const labels = [];
+      const values = [];
+      const colors = [];
       let statHtml = '';
-      labels.forEach((label, idx) => {
+
+      classes.forEach(c => {
+        const val = parseFloat(properties[c.key] || 0);
+        labels.push(c.label);
+        values.push(val);
+        colors.push(c.color);
+
         statHtml += `
           <div class="stat-row">
             <div class="stat-tag">
-              <span class="stat-pill" style="background: ${colors[idx]};"></span>
-              <span>${label}</span>
+              <span class="stat-pill" style="background: ${c.color};"></span>
+              <span>${c.label}</span>
             </div>
-            <span class="stat-val">${values[idx].toFixed(1)}%</span>
+            <span class="stat-val">${val.toFixed(1)}%</span>
           </div>
         `;
       });
@@ -526,7 +575,7 @@
         type: 'doughnut',
         data: {
           labels: labels,
-          datasets: [{ data: values, backgroundColor: colors, borderWidth: 0 }]
+          datasets: [{ data: values, backgroundColor: colors, borderWidth: 0, hoverOffset: 4 }]
         },
         options: {
           responsive: true,
@@ -536,20 +585,43 @@
       });
     }
 
+    function computeStatewideAverages() {
+      if (!geojsonData) return;
+      const stateTotals = {};
+      classes.forEach(c => stateTotals[c.key] = 0);
+      const totalDistricts = geojsonData.features.length;
+
+      geojsonData.features.forEach(f => {
+        classes.forEach(c => {
+          stateTotals[c.key] += parseFloat(f.properties[c.key] || 0);
+        });
+      });
+
+      const stateAverages = {};
+      classes.forEach(c => {
+        stateAverages[c.key] = (stateTotals[c.key] / totalDistricts).toFixed(2);
+      });
+
+      updateChart("Assam State Average", "Aggregated State-wide Coverage Ratios", stateAverages, true);
+    }
+
     function selectDistrict(name) {
       selectedDistrictName = name;
       const item = districtLookup[name];
       if (!item) return;
 
       if (districtLayer) {
-        districtLayer.setStyle(f => ({
-          pane: 'districtPane',
-          fillColor: '#000000',
-          fillOpacity: 0.05,
-          weight: (f.properties?.name || f.properties?.DISTRICT) === name ? 3.5 : 1.2,
-          color: (f.properties?.name || f.properties?.DISTRICT) === name ? '#38bdf8' : '#ffffff',
-          opacity: currentVectorOpacity
-        }));
+        districtLayer.setStyle(f => {
+          const isSelected = (f.properties?.name || f.properties?.DISTRICT) === name;
+          return {
+            pane: 'districtPane',
+            fillColor: '#000000',
+            fillOpacity: isSelected ? 0.0 : 0.25,
+            weight: isSelected ? 3.5 : 1.2,
+            color: isSelected ? '#38bdf8' : '#ffffff',
+            opacity: currentVectorOpacity
+          };
+        });
       }
 
       item.layer.bringToFront();
@@ -562,30 +634,14 @@
         paddingBottomRight: [20, paddingBottom]
       });
 
-      updateChart(name, item.feature.properties);
+      updateChart(name, "District LULC Coverage Distribution", item.feature.properties, false);
       document.getElementById('district-dropdown').value = name;
     }
 
-    // 2. Fetch and apply shader to Assam_LULC_2026.tif[cite: 2]
-    fetch('Assam_LULC_2026.tif')
-      .then(res => {
-        if (!res.ok) throw new Error("Could not find Assam_LULC_2026.tif in repository.");
-        return res.arrayBuffer();
-      })
-      .then(parseGeoraster)
-      .then(georaster => {
-        parsedGeoraster = georaster;
-        document.getElementById('status-badge').innerText = 'Raster Shader Active';
-        document.getElementById('status-badge').style.background = '#15803d';
-        applyRasterShader();
-      })
-      .catch(err => {
-        console.error(err);
-        document.getElementById('status-badge').innerText = 'Raster Error (Verify File)';
-        document.getElementById('status-badge').style.background = '#b91c1c';
-      });
+    // 1. Initial Load of the Default Viridis GeoTIFF
+    loadGeoTiffLayer('assam_lulc_viridis.tif');
 
-    // 3. Load District Outlines[cite: 2]
+    // 2. Load District Boundaries from GeoJSON
     fetch('assam_districts.geojson.json')
       .then(res => res.json())
       .then(data => {
@@ -622,11 +678,14 @@
           }
         }).addTo(map);
 
-        if (data.features.length > 0) {
-          updateChart("Assam State Average", data.features[0].properties);
-        }
+        computeStatewideAverages();
       })
       .catch(err => console.error("Error loading district GeoJSON:", err));
+
+    // Dropdown change handler for color ramp switching
+    document.getElementById('raster-ramp-select').addEventListener('change', (e) => {
+      loadGeoTiffLayer(e.target.value);
+    });
 
     // Basemap Toggle Handler
     document.getElementById('basemap-toggle').addEventListener('change', (e) => {
@@ -634,15 +693,6 @@
         if (!map.hasLayer(googleHybrid)) map.addLayer(googleHybrid);
       } else {
         if (map.hasLayer(googleHybrid)) map.removeLayer(googleHybrid);
-      }
-    });
-
-    // Controls Event Listeners
-    document.getElementById('raster-ramp-select').addEventListener('change', (e) => {
-      currentRampKey = e.target.value;
-      applyRasterShader();
-      if (selectedDistrictName && districtLookup[selectedDistrictName]) {
-        updateChart(selectedDistrictName, districtLookup[selectedDistrictName].feature.properties);
       }
     });
 
@@ -663,6 +713,12 @@
         districtLayer.setStyle({ opacity: currentVectorOpacity });
       }
     });
+
+    // Modal Events
+    const modal = document.getElementById('info-modal');
+    document.getElementById('open-info-modal').addEventListener('click', () => { modal.style.display = 'flex'; });
+    document.getElementById('close-info-modal').addEventListener('click', () => { modal.style.display = 'none'; });
+    window.addEventListener('click', (e) => { if (e.target === modal) modal.style.display = 'none'; });
   </script>
 </body>
 </html>
