@@ -9,9 +9,6 @@
   <link rel="stylesheet" href="https://unpkg.com/leaflet@1.9.4/dist/leaflet.css" />
   <!-- Chart.js -->
   <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
-  <!-- GeoTIFF In-Browser Renderers -->
-  <script src="https://unpkg.com/georaster"></script>
-  <script src="https://unpkg.com/georaster-layer-for-leaflet"></script>
 
   <style>
     * { box-sizing: border-box; margin: 0; padding: 0; -webkit-tap-highlight-color: transparent; }
@@ -85,7 +82,7 @@
       font-size: 0.68rem;
       padding: 3px 7px;
       border-radius: 4px;
-      background: #0284c7;
+      background: #15803d;
       color: white;
       font-weight: 600;
       display: inline-block;
@@ -305,25 +302,25 @@
         <div>
           <h2>Assam LULC Explorer</h2>
           <p class="subtext">Multi-Scale Earth Observation & Dynamic Cartography</p>
-          <span id="status-badge">Loading GeoTIFF...</span>
+          <span id="status-badge">Raster Layer Active</span>
         </div>
         <div class="header-actions">
           <button class="btn-info" id="open-info-modal" title="About LULC">i</button>
         </div>
       </div>
 
-      <!-- Color Ramp GeoTIFF Switcher -->
+      <!-- Color Ramp Layer Switcher (Matches your 8 exported PNG files) -->
       <div class="card">
-        <label class="input-label" for="raster-ramp-select">🎨 Rendered GeoTIFF Layer:</label>
+        <label class="input-label" for="raster-ramp-select">🎨 Classification Color Ramp:</label>
         <select id="raster-ramp-select">
-          <option value="assam_lulc_viridis.tif" selected>🟢 Viridis (Glowing River / Canopy)</option>
-          <option value="assam_lulc_turbo.tif">🔥 Turbo (High Chroma Spectrum)</option>
-          <option value="assam_lulc_Magma.tif">🌋 Magma (Thermal River Contrast)</option>
-          <option value="assam_lulc_Plasma.tif">⚡ Plasma (Neon Violet & Amber)</option>
-          <option value="assam_lulc_Cividis.tif">👁️ Cividis (Colorblind-Safe Navy/Gold)</option>
-          <option value="assam_lulc_Spectral.tif">🌈 Spectral (Full Multi-Band Gradient)</option>
-          <option value="assam_lulc_BrBG.tif">🍂 BrBG (Brown Chars / Blue-Green Water)</option>
-          <option value="assam_lulc_PRGn.tif">🌿 PRGn (Purple Hills / Green Cropland)</option>
+          <option value="assam_lulc_viridis.png" selected>🟢 Viridis (Glowing River / Forest Canopy)</option>
+          <option value="assam_lulc_turbo.png">🔥 Turbo (High Chroma Spectrum)</option>
+          <option value="assam_lulc_Magma.png">🌋 Magma (Thermal River Contrast)</option>
+          <option value="assam_lulc_Plasma.png">⚡ Plasma (Neon Violet & Amber)</option>
+          <option value="assam_lulc_Cividis.png">👁️ Cividis (Colorblind-Safe Navy/Gold)</option>
+          <option value="assam_lulc_Spectral.png">🌈 Spectral (Full Multi-Band Gradient)</option>
+          <option value="assam_lulc_BrBG.png">🍂 BrBG (Brown Chars / Blue-Green Water)</option>
+          <option value="assam_lulc_PRGn.png">🌿 PRGn (Purple Hills / Green Cropland)</option>
         </select>
       </div>
 
@@ -350,7 +347,7 @@
       <div class="card">
         <div class="slider-box">
           <div style="display: flex; justify-content: space-between;">
-            <span>GeoTIFF Raster Opacity</span>
+            <span>LULC Raster Opacity</span>
             <span id="raster-opacity-val">85%</span>
           </div>
           <input type="range" id="raster-opacity" min="0" max="1" step="0.05" value="0.85" />
@@ -453,7 +450,17 @@
       attribution: 'Map &copy; Google'
     }).addTo(map);
 
-    // Mobile Viewport Invalidation
+    // EXACT BOUNDING BOX MATCHED TO ASSAM EXTENT
+    const rasterBounds = [[24.1, 89.7], [28.2, 96.2]];
+    
+    // NATIVE IMAGE OVERLAY: Starts with Viridis PNG
+    let lulcOverlay = L.imageOverlay('assam_lulc_viridis.png', rasterBounds, {
+      opacity: 0.85,
+      pane: 'rasterPane',
+      interactive: false
+    }).addTo(map);
+
+    // Responsive Mobile Handling
     window.addEventListener('resize', () => { map.invalidateSize(); });
     window.addEventListener('orientationchange', () => { setTimeout(() => { map.invalidateSize(); }, 250); });
 
@@ -467,7 +474,7 @@
       });
     }
 
-    // Reset View Button
+    // Reset Map View Control
     const ResetControl = L.Control.extend({
       options: { position: 'topleft' },
       onAdd: function() {
@@ -487,7 +494,6 @@
     });
     map.addControl(new ResetControl());
 
-    let rasterLayer = null;
     let districtLayer = null;
     let chartInstance = null;
     let geojsonData = null;
@@ -504,41 +510,6 @@
       { key: 'pct_builtup', label: 'Urban Built-up', color: '#e31a1c' },
       { key: 'pct_barren', label: 'Chars & Sandbars', color: '#fdae61' }
     ];
-
-    // DYNAMIC TIFF LOADER: Fetches and mounts the selected GeoTIFF file
-    function loadGeoTiffLayer(tifFilename) {
-      const badge = document.getElementById('status-badge');
-      badge.innerText = 'Rendering GeoTIFF...';
-      badge.style.background = '#0284c7';
-
-      fetch(tifFilename)
-        .then(res => {
-          if (!res.ok) throw new Error("Could not find " + tifFilename);
-          return res.arrayBuffer();
-        })
-        .then(parseGeoraster)
-        .then(georaster => {
-          if (rasterLayer) {
-            map.removeLayer(rasterLayer);
-          }
-
-          rasterLayer = new GeoRasterLayer({
-            georaster: georaster,
-            opacity: currentRasterOpacity,
-            pane: 'rasterPane',
-            resolution: 256
-          });
-
-          rasterLayer.addTo(map);
-          badge.innerText = 'GeoTIFF Active';
-          badge.style.background = '#15803d';
-        })
-        .catch(err => {
-          console.error(err);
-          badge.innerText = 'TIFF Load Error';
-          badge.style.background = '#b91c1c';
-        });
-    }
 
     function updateChart(title, subtitle, properties, isStatewide = false) {
       document.getElementById('panel-title').innerText = title;
@@ -638,10 +609,7 @@
       document.getElementById('district-dropdown').value = name;
     }
 
-    // 1. Initial Load of the Default Viridis GeoTIFF
-    loadGeoTiffLayer('assam_lulc_viridis.tif');
-
-    // 2. Load District Boundaries from GeoJSON
+    // Load District Boundaries from GeoJSON
     fetch('assam_districts.geojson.json')
       .then(res => res.json())
       .then(data => {
@@ -682,9 +650,10 @@
       })
       .catch(err => console.error("Error loading district GeoJSON:", err));
 
-    // Dropdown change handler for color ramp switching
+    // Dynamic PNG Image Switcher
     document.getElementById('raster-ramp-select').addEventListener('change', (e) => {
-      loadGeoTiffLayer(e.target.value);
+      const selectedImg = e.target.value;
+      lulcOverlay.setUrl(selectedImg);
     });
 
     // Basemap Toggle Handler
@@ -703,7 +672,7 @@
     document.getElementById('raster-opacity').addEventListener('input', (e) => {
       currentRasterOpacity = parseFloat(e.target.value);
       document.getElementById('raster-opacity-val').innerText = `${Math.round(currentRasterOpacity * 100)}%`;
-      if (rasterLayer) rasterLayer.setOpacity(currentRasterOpacity);
+      lulcOverlay.setOpacity(currentRasterOpacity);
     });
 
     document.getElementById('vector-opacity').addEventListener('input', (e) => {
