@@ -3,7 +3,7 @@
 <head>
   <meta charset="UTF-8" />
   <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no, viewport-fit=cover" />
-  <title>Assam Space-GIS Engine | Deep-Tech Earth Observation Terminal</title>
+  <title>Assam Space-GIS Engine | Earth Observation Terminal</title>
 
   <!-- Leaflet CSS -->
   <link rel="stylesheet" href="https://unpkg.com/leaflet@1.9.4/dist/leaflet.css" />
@@ -11,8 +11,6 @@
   <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css" />
   <!-- Chart.js -->
   <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
-  <!-- ONNX Runtime Web (Client-Side Super-Resolution Engine) -->
-  <script src="https://cdn.jsdelivr.net/npm/onnxruntime-web@1.18.0/dist/ort.min.js"></script>
 
   <style>
     * { box-sizing: border-box; margin: 0; padding: 0; -webkit-tap-highlight-color: transparent; }
@@ -20,7 +18,6 @@
     html, body {
       width: 100%;
       height: 100%;
-      height: 100dvh;
       background: #040711;
       color: #f1f5f9;
       overflow: hidden;
@@ -29,17 +26,18 @@
 
     #app-container {
       display: flex;
-      width: 100%;
-      height: 100%;
+      width: 100vw;
+      height: 100vh;
       position: relative;
     }
 
     #map {
       flex: 1;
       height: 100%;
-      width: 100%;
+      min-width: 0;
+      position: relative;
+      background: #0a0f1d;
       z-index: 1;
-      background: #050811;
     }
 
     /* Sidebar Panel */
@@ -56,7 +54,6 @@
       z-index: 1000;
       border-left: 1px solid rgba(255, 255, 255, 0.12);
       box-shadow: -10px 0 36px rgba(0, 0, 0, 0.75);
-      transition: transform 0.3s cubic-bezier(0.16, 1, 0.3, 1);
     }
 
     .header-box { display: flex; justify-content: space-between; align-items: flex-start; }
@@ -223,9 +220,8 @@
       box-shadow: 0 2px 8px rgba(0,0,0,0.5);
     }
 
-    /* AI Super-Resolution Filter Layer applied to Leaflet Pane */
     .super-res-active {
-      filter: contrast(125%) saturate(120%) brightness(105%) drop-shadow(0 0 1px rgba(0,0,0,0.8));
+      filter: contrast(125%) saturate(120%) brightness(105%);
       image-rendering: -webkit-optimize-contrast;
       image-rendering: crisp-edges;
     }
@@ -269,7 +265,7 @@
 </head>
 <body>
 
-  <!-- Dynamic SVG Clipping Mask for isolating satellite data strictly to chosen district -->
+  <!-- Hidden SVG for clipping satellite pane strictly to selected district -->
   <svg width="0" height="0" style="position: absolute; pointer-events: none;">
     <defs>
       <clipPath id="districtClipPath" clipPathUnits="userSpaceOnUse">
@@ -293,7 +289,7 @@
         </div>
       </div>
 
-      <!-- 1. DISTRICT SELECTION & CLIPPING CONTROL -->
+      <!-- 1. SPATIAL TARGETING -->
       <div class="card">
         <h3>1. Spatial Polygon Targeting</h3>
         <label class="input-label" for="district-dropdown">Select District (Clips satellite stream):</label>
@@ -317,7 +313,7 @@
         </div>
       </div>
 
-      <!-- 2. COPERNICUS DIRECT LIVE STREAMING (MATCHED TO INSTANCE) -->
+      <!-- 2. SENSOR ANALYSIS PRESET -->
       <div class="card">
         <h3>
           <span>2. Sensor Analysis Preset</span>
@@ -334,12 +330,12 @@
             <option value="FALSE_COLOR_URBAN">🏙️ False Color Urban: Built-up Density</option>
             <option value="AGRICULTURE">🌾 Agriculture Bands: Cropland Monitoring</option>
             <option value="MOISTURE_INDEX">🧪 Moisture Index: Surface Water Content</option>
-            <option value="SWIR">🌋 SWIR: Soil Mineral & Atmospheric Penetration</option>
+            <option value="SWIR">🌋 SWIR: Soil Mineral & Penetration</option>
           </optgroup>
           <optgroup label="Radar SAR Cloud-Penetrating (Sentinel-1)">
             <option value="SENTINEL-1-FLOOD">🌊 Sentinel-1 SAR: Brahmaputra Flood Inundation</option>
           </optgroup>
-          <option value="OFF">❌ Disable Satellite Layer</option>
+          <option value="OFF">❌ Disable Satellite Layer (Basemap Only)</option>
         </select>
 
         <div class="slider-box" style="margin-top: 6px;">
@@ -350,21 +346,21 @@
           <input type="range" id="copernicus-opacity" min="0" max="1" step="0.05" value="0.80" />
         </div>
 
-        <!-- RESOLUTION ALERT SUPPRESSOR -->
+        <!-- RESOLUTION ALERT -->
         <div class="zoom-alert" id="zoom-alert">
           <i class="fa-solid fa-circle-info"></i>
-          <span>Resolution protection active: Zoom in to Level 10+ or select a district to resolve sub-200m Sentinel pixels.</span>
+          <span>Resolution protection: Zoom in to Level 10+ or select a district to load full-res Sentinel tiles.</span>
         </div>
       </div>
 
-      <!-- 3. AI SUPER-RESOLUTION / QGIS ENHANCEMENT ENGINE -->
+      <!-- 3. SUPER-RESOLUTION -->
       <div class="card">
         <h3>
           <span>3. Super-Resolution (Deepness AI)</span>
           <span class="ai-badge">ONNX Web</span>
         </h3>
         <p style="font-size:0.72rem; color:#94a3b8; margin-bottom: 6px;">
-          Simulates Deepness ONNX neural model sharpening, upscaling 10m Sentinel raster pixels to higher visual clarity.
+          Simulates Deepness ONNX neural model sharpening, enhancing 10m Sentinel raster clarity.
         </p>
 
         <label style="font-size:0.74rem; display:flex; align-items:center; gap:6px; cursor:pointer;">
@@ -373,7 +369,7 @@
         </label>
       </div>
 
-      <!-- 4. LIVE PRODUCT CATALOG & RAW DOWNLOAD -->
+      <!-- 4. LIVE PRODUCT SEARCH -->
       <div class="card">
         <h3>4. Raw Scene Query & Download</h3>
         <label class="input-label">Acquisition Date Target:</label>
@@ -411,7 +407,7 @@
       <button class="modal-close" id="close-config-modal">&times;</button>
       <h3 style="color: #38bdf8; margin-bottom: 8px;"><i class="fa-solid fa-satellite"></i> Copernicus Plugin Settings</h3>
       <p style="font-size: 0.78rem; color: #cbd5e1; margin-bottom: 12px; line-height: 1.4;">
-        Active Sentinel Hub Configuration Instance connected to your Copernicus Data Space Ecosystem account.
+        Active Sentinel Hub Configuration Instance connected to your account.
       </p>
 
       <label class="input-label">Sentinel Hub Instance ID:</label>
@@ -421,8 +417,10 @@
     </div>
   </div>
 
+  <script src="https://unpkg.com/leaflet@1.9.4/dist/leaflet.js"></script>
+
   <script>
-    // 1. Initialized with your verified Configuration Instance ID
+    // 1. Instance ID
     let COPERNICUS_INSTANCE_ID = localStorage.getItem('cdse_instance_id') || 'a487ee8c-498a-422c-9cfd-015d1cfb6bb8';
     document.getElementById('cfg-instance-id').value = COPERNICUS_INSTANCE_ID;
 
@@ -430,21 +428,21 @@
     const assamBounds = L.latLngBounds(L.latLng(23.5, 89.2), L.latLng(28.5, 96.5));
     const map = L.map('map', {
       center: [26.2006, 92.9376],
-      zoom: window.innerWidth < 768 ? 7 : 8,
-      minZoom: 6,
+      zoom: 8,
+      minZoom: 5,
       maxZoom: 18,
       maxBounds: assamBounds,
       zoomControl: true
     });
 
-    // Custom Map Panes to prevent z-fighting and support polygon clipping
+    // Custom Map Panes
     map.createPane('copernicusPane');
     map.getPane('copernicusPane').style.zIndex = 400;
 
     map.createPane('districtPane');
     map.getPane('districtPane').style.zIndex = 500;
 
-    // High-Resolution Satellite Basemap (~1m resolution)
+    // Base Layer: Google Satellite Hybrid (Always visible)
     const googleHybrid = L.tileLayer('https://mt1.google.com/vt/lyrs=y&x={x}&y={y}&z={z}', {
       maxZoom: 20,
       attribution: 'Base &copy; Google Satellite'
@@ -460,13 +458,16 @@
     let currentVectorOpacity = 0.60;
     let footprintsLayer = L.layerGroup().addTo(map);
 
-    // 3. Resolution Watcher (Prevents Red Tile Errors)
+    // Force map to recognize size immediately
+    setTimeout(() => { map.invalidateSize(); }, 200);
+
+    // 3. Resolution Check to Avoid the 200m tile error
     function checkZoomLimits() {
       const zoom = map.getZoom();
       const zoomAlert = document.getElementById('zoom-alert');
       const activeLayer = document.getElementById('copernicus-layer-select').value;
       
-      // When zoomed out (< 10) on Sentinel layers without selecting a district, warn the user
+      // If zoomed out (< 10) without a district chosen, notify user
       if (zoom < 10 && activeLayer !== 'OFF' && !selectedDistrictFeature) {
         zoomAlert.style.display = 'flex';
       } else {
@@ -480,20 +481,19 @@
     });
     map.on('moveend', updateDistrictClipMask);
 
-    // 4. Polygon Boundary Masking / Clipping
+    // 4. Safe Polygon Clipping (NEVER clips to an empty path)
     function updateDistrictClipMask() {
       const clipToggle = document.getElementById('clip-to-district-toggle').checked;
       const copernicusPane = map.getPane('copernicusPane');
       const clipPathData = document.getElementById('districtClipPathData');
 
+      // CRITICAL: If no district is selected or toggle is off, remove clipping entirely!
       if (!clipToggle || !selectedDistrictFeature) {
-        // No clipping: render across map
         copernicusPane.style.clipPath = 'none';
         copernicusPane.style.webkitClipPath = 'none';
         return;
       }
 
-      // Convert GeoJSON geographic coordinates into Leaflet screen pixels
       const geom = selectedDistrictFeature.geometry;
       let pathD = "";
       const rings = geom.type === 'Polygon' ? [geom.coordinates] : geom.coordinates;
@@ -510,9 +510,14 @@
         });
       });
 
-      clipPathData.setAttribute('d', pathD);
-      copernicusPane.style.clipPath = 'url(#districtClipPath)';
-      copernicusPane.style.webkitClipPath = 'url(#districtClipPath)';
+      if (pathD.trim().length > 0) {
+        clipPathData.setAttribute('d', pathD);
+        copernicusPane.style.clipPath = 'url(#districtClipPath)';
+        copernicusPane.style.webkitClipPath = 'url(#districtClipPath)';
+      } else {
+        copernicusPane.style.clipPath = 'none';
+        copernicusPane.style.webkitClipPath = 'none';
+      }
     }
 
     // 5. Live Copernicus Layer Loader
@@ -532,7 +537,6 @@
       document.getElementById('live-indicator').innerText = "LIVE WMS";
       document.getElementById('live-indicator').style.background = "#0284c7";
 
-      // Official Copernicus Data Space Ecosystem (CDSE) Endpoint
       const wmsUrl = `https://sh.dataspace.copernicus.eu/ogc/wms/${COPERNICUS_INSTANCE_ID}`;
 
       copernicusWmsLayer = L.tileLayer.wms(wmsUrl, {
@@ -541,16 +545,19 @@
         transparent: true,
         pane: 'copernicusPane',
         opacity: currentCopernicusOpacity,
-        minZoom: 9, // Suppresses tile fetching outside the 200m/pixel limit
+        minZoom: 9, // Prevent tile error at world/country scale
         maxZoom: 18,
-        attribution: '&copy; Copernicus Data Space Ecosystem / ESA'
+        attribution: '&copy; Copernicus Data Space Ecosystem'
       }).addTo(map);
 
       checkZoomLimits();
       updateDistrictClipMask();
     }
 
-    // 6. AI Super-Resolution Post-Processor
+    // Initialize Default Layer
+    updateCopernicusLiveLayer(document.getElementById('copernicus-layer-select').value);
+
+    // 6. AI Enhancement Toggle
     document.getElementById('ai-enhance-toggle').addEventListener('change', (e) => {
       const pane = map.getPane('copernicusPane');
       if (e.target.checked) {
@@ -572,7 +579,6 @@
       footprintsLayer.clearLayers();
 
       const bbox = [b.getWest(), b.getSouth(), b.getEast(), b.getNorth()];
-      
       const payload = {
         "collections": [isSAR ? "SENTINEL-1-GRD" : "SENTINEL-2-L2A"],
         "bbox": bbox,
@@ -589,7 +595,7 @@
         const data = await response.json();
 
         if (!data.features || data.features.length === 0) {
-          resContainer.innerHTML = '<p style="color:#94a3b8; font-size:0.72rem;">No scenes found on this date. Try expanding date range.</p>';
+          resContainer.innerHTML = '<p style="color:#94a3b8; font-size:0.72rem;">No scenes on this exact day. Try an earlier or later date.</p>';
           return;
         }
 
@@ -606,7 +612,7 @@
           resContainer.innerHTML += `
             <div class="scene-card">
               <strong style="color:#38bdf8;">${feat.id.substring(0, 24)}...</strong><br>
-              Cloud: ${props["eo:cloud_cover"] !== undefined ? props["eo:cloud_cover"].toFixed(1) + "%" : "Radar Mode"}<br>
+              Cloud: ${props["eo:cloud_cover"] !== undefined ? props["eo:cloud_cover"].toFixed(1) + "%" : "Radar"}<br>
               <a href="${downloadUrl}" target="_blank" style="color: #38bdf8; text-decoration: none; font-weight: 600;">
                 <i class="fa-solid fa-download"></i> Direct ZIP Download
               </a>
@@ -618,7 +624,7 @@
       }
     }
 
-    // 8. District Metrics & Analytics Engine
+    // 8. District Analytics & Chart
     const classes = [
       { key: 'pct_forest', label: 'Dense Forest Canopy', color: '#1b7837' },
       { key: 'pct_shrub_tea', label: 'Tea & Shrubland', color: '#78c679' },
@@ -723,7 +729,7 @@
 
       item.layer.bringToFront();
       
-      // Auto-zoom to Level 10 or 11 (bypasses 200m tile resolution limit)
+      // Auto zoom to Level 10+ so the 200m resolution limit is satisfied
       map.fitBounds(item.layer.getBounds(), { padding: [25, 25], maxZoom: 12 });
       
       updateDistrictClipMask();
@@ -732,46 +738,59 @@
       checkZoomLimits();
     }
 
-    // Load Districts from local GeoJSON
+    // 9. Load Districts GeoJSON with safe Fallback
+    function initGeoJSON(data) {
+      data.features = data.features.filter(f => 
+        f.geometry && (f.geometry.type === 'Polygon' || f.geometry.type === 'MultiPolygon')
+      );
+      geojsonData = data;
+
+      const dropdown = document.getElementById('district-dropdown');
+      data.features.forEach(f => {
+        const name = f.properties?.name || f.properties?.DISTRICT;
+        if (name) {
+          const opt = document.createElement('option');
+          opt.value = name;
+          opt.innerText = name;
+          dropdown.appendChild(opt);
+        }
+      });
+
+      districtLayer = L.geoJSON(data, {
+        pane: 'districtPane',
+        style: {
+          fillColor: '#000000',
+          fillOpacity: 0.0,
+          weight: 1.5,
+          opacity: currentVectorOpacity,
+          color: '#ffffff',
+          dashArray: '3'
+        },
+        onEachFeature: (feature, layer) => {
+          const name = feature.properties?.name || feature.properties?.DISTRICT;
+          districtLookup[name] = { layer, feature };
+          layer.on('click', () => selectDistrict(name));
+        }
+      }).addTo(map);
+
+      computeStatewideAverages();
+      map.invalidateSize();
+    }
+
+    // Try relative path first
     fetch('assam_districts.geojson.json')
-      .then(res => res.json())
-      .then(data => {
-        data.features = data.features.filter(f => 
-          f.geometry && (f.geometry.type === 'Polygon' || f.geometry.type === 'MultiPolygon')
-        );
-        geojsonData = data;
-
-        const dropdown = document.getElementById('district-dropdown');
-        data.features.forEach(f => {
-          const name = f.properties?.name || f.properties?.DISTRICT;
-          if (name) {
-            const opt = document.createElement('option');
-            opt.value = name;
-            opt.innerText = name;
-            dropdown.appendChild(opt);
-          }
-        });
-
-        districtLayer = L.geoJSON(data, {
-          pane: 'districtPane',
-          style: {
-            fillColor: '#000000',
-            fillOpacity: 0.0,
-            weight: 1.5,
-            opacity: currentVectorOpacity,
-            color: '#ffffff',
-            dashArray: '3'
-          },
-          onEachFeature: (feature, layer) => {
-            const name = feature.properties?.name || feature.properties?.DISTRICT;
-            districtLookup[name] = { layer, feature };
-            layer.on('click', () => selectDistrict(name));
-          }
-        }).addTo(map);
-
-        computeStatewideAverages();
+      .then(res => {
+        if (!res.ok) throw new Error("Local HTTP file not reachable");
+        return res.json();
       })
-      .catch(err => console.error("District GeoJSON load failed:", err));
+      .then(data => initGeoJSON(data))
+      .catch(err => {
+        console.warn("Falling back to root or alternative path:", err);
+        fetch('assam_districts.geojson')
+          .then(res => res.json())
+          .then(data => initGeoJSON(data))
+          .catch(e => console.error("Could not load district geojson file. Make sure file is in same directory:", e));
+      });
 
     // Reset View Button Control
     const ResetControl = L.Control.extend({
