@@ -3,12 +3,16 @@
 <head>
   <meta charset="UTF-8" />
   <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no, viewport-fit=cover" />
-  <title>Assam Space-GIS Engine | Earth Observation Terminal</title>
+  <title>Assam Space-GIS Engine | Zero-Watermark Live Observation Terminal</title>
 
-  <!-- Leaflet CSS -->
+  <!-- Leaflet Core & Plugins -->
   <link rel="stylesheet" href="https://unpkg.com/leaflet@1.9.4/dist/leaflet.css" />
+  <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/leaflet.draw/1.0.4/leaflet.draw.css" />
   <!-- FontAwesome -->
   <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css" />
+  <!-- Flatpickr (Pro Calendar Range Picker) -->
+  <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/flatpickr/dist/flatpickr.min.css" />
+  <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/flatpickr/dist/themes/dark.css" />
   <!-- Chart.js -->
   <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
 
@@ -16,42 +20,21 @@
     * { box-sizing: border-box; margin: 0; padding: 0; -webkit-tap-highlight-color: transparent; }
     
     html, body {
-      width: 100%;
-      height: 100%;
-      background: #040711;
-      color: #f1f5f9;
+      width: 100%; height: 100%;
+      background: #040711; color: #f1f5f9;
       overflow: hidden;
       font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, sans-serif;
     }
 
-    #app-container {
-      display: flex;
-      width: 100vw;
-      height: 100vh;
-      position: relative;
-    }
-
-    #map {
-      flex: 1;
-      height: 100%;
-      min-width: 0;
-      position: relative;
-      background: #0a0f1d;
-      z-index: 1;
-    }
+    #app-container { display: flex; width: 100vw; height: 100vh; position: relative; }
+    #map { flex: 1; height: 100%; min-width: 0; position: relative; background: #0a0f1d; z-index: 1; }
 
     /* Sidebar Panel */
     #sidebar {
-      width: 440px;
-      height: 100%;
-      background: rgba(8, 12, 24, 0.96);
-      backdrop-filter: blur(16px);
-      padding: 16px;
-      display: flex;
-      flex-direction: column;
-      gap: 12px;
-      overflow-y: auto;
-      z-index: 1000;
+      width: 440px; height: 100%;
+      background: rgba(8, 12, 24, 0.96); backdrop-filter: blur(16px);
+      padding: 16px; display: flex; flex-direction: column; gap: 12px;
+      overflow-y: auto; z-index: 1000;
       border-left: 1px solid rgba(255, 255, 255, 0.12);
       box-shadow: -10px 0 36px rgba(0, 0, 0, 0.75);
     }
@@ -63,209 +46,78 @@
     .header-actions { display: flex; gap: 6px; align-items: center; }
 
     .btn-action {
-      background: #1e293b;
-      border: 1px solid #38bdf8;
-      color: #38bdf8;
-      border-radius: 6px;
-      padding: 5px 9px;
-      font-weight: 700;
-      font-size: 0.75rem;
-      cursor: pointer;
-      display: flex;
-      align-items: center;
-      gap: 5px;
-      transition: all 0.2s;
+      background: #1e293b; border: 1px solid #38bdf8; color: #38bdf8;
+      border-radius: 6px; padding: 5px 9px; font-weight: 700; font-size: 0.75rem;
+      cursor: pointer; display: flex; align-items: center; gap: 5px; transition: all 0.2s;
     }
     .btn-action:hover { background: #0284c7; color: white; }
 
-    #status-badge {
-      font-size: 0.68rem;
-      padding: 3px 7px;
-      border-radius: 4px;
-      background: #0284c7;
-      color: white;
-      font-weight: 600;
-      display: inline-block;
-      margin-top: 4px;
-    }
-
-    .card {
-      background: #0f172a;
-      border-radius: 10px;
-      padding: 12px 14px;
-      border: 1px solid #1e293b;
-    }
-
+    .card { background: #0f172a; border-radius: 10px; padding: 12px 14px; border: 1px solid #1e293b; }
     .card h3 { 
-      font-size: 0.8rem; 
-      margin-bottom: 8px; 
-      color: #f8fafc; 
-      font-weight: 700; 
-      text-transform: uppercase; 
-      letter-spacing: 0.05em;
-      display: flex;
-      justify-content: space-between;
-      align-items: center;
+      font-size: 0.8rem; margin-bottom: 8px; color: #f8fafc; font-weight: 700; 
+      text-transform: uppercase; letter-spacing: 0.05em; display: flex; justify-content: space-between; align-items: center;
     }
 
-    .badge {
-      font-size: 0.68rem;
-      padding: 3px 7px;
-      border-radius: 4px;
-      font-weight: 600;
-      background: #0284c7;
-      color: #ffffff;
-      text-transform: none;
-    }
-
+    .badge { font-size: 0.68rem; padding: 3px 7px; border-radius: 4px; font-weight: 600; background: #0284c7; color: #ffffff; }
     .input-label { font-size: 0.74rem; color: #94a3b8; display: block; margin-bottom: 4px; font-weight: 600; }
 
-    select, input[type="text"], input[type="date"] {
-      width: 100%;
-      background: #060a14;
-      border: 1px solid #1e293b;
-      color: #f8fafc;
-      padding: 8px 10px;
-      border-radius: 6px;
-      font-size: 0.8rem;
-      outline: none;
-      cursor: pointer;
-      margin-bottom: 6px;
+    select, input[type="text"] {
+      width: 100%; background: #060a14; border: 1px solid #1e293b;
+      color: #f8fafc; padding: 8px 10px; border-radius: 6px; font-size: 0.8rem;
+      outline: none; cursor: pointer; margin-bottom: 6px;
     }
     select:focus, input:focus { border-color: #38bdf8; }
 
-    .slider-box {
-      display: flex;
-      flex-direction: column;
-      gap: 4px;
-      font-size: 0.76rem;
-      color: #94a3b8;
-    }
+    .slider-box { display: flex; flex-direction: column; gap: 4px; font-size: 0.76rem; color: #94a3b8; }
     input[type="range"] { accent-color: #38bdf8; cursor: pointer; }
 
-    .btn-live-search {
-      width: 100%;
-      background: #0284c7;
-      color: white;
-      border: none;
-      border-radius: 6px;
-      padding: 8px;
-      font-weight: 600;
-      font-size: 0.78rem;
-      cursor: pointer;
-      transition: background 0.2s;
+    .btn-primary {
+      width: 100%; background: #0284c7; color: white; border: none; border-radius: 6px;
+      padding: 8px; font-weight: 600; font-size: 0.78rem; cursor: pointer; transition: background 0.2s;
     }
-    .btn-live-search:hover { background: #0369a1; }
+    .btn-primary:hover { background: #0369a1; }
 
-    .zoom-alert {
-      background: rgba(234, 179, 8, 0.15);
-      border: 1px solid #eab308;
-      color: #fef08a;
-      padding: 7px 10px;
-      border-radius: 6px;
-      font-size: 0.72rem;
-      margin-top: 6px;
-      display: none;
-      align-items: center;
-      gap: 6px;
+    .export-grid { display: grid; grid-template-columns: 1fr 1fr; gap: 6px; margin-top: 6px; }
+    .btn-export {
+      background: #1e293b; border: 1px solid #334155; color: #e2e8f0; border-radius: 6px;
+      padding: 7px; font-size: 0.72rem; font-weight: 600; cursor: pointer; display: flex; align-items: center; justify-content: center; gap: 5px;
     }
+    .btn-export:hover { border-color: #38bdf8; color: #38bdf8; background: #0f172a; }
 
-    .ai-badge {
-      background: linear-gradient(135deg, #8b5cf6, #d946ef);
-      color: white;
-      font-size: 0.65rem;
-      padding: 2px 6px;
-      border-radius: 4px;
-      font-weight: 700;
-    }
-
-    .stat-row {
-      display: flex;
-      justify-content: space-between;
-      align-items: center;
-      padding: 4px 0;
-      border-bottom: 1px solid #1e293b;
-      font-size: 0.76rem;
-    }
+    .stat-row { display: flex; justify-content: space-between; align-items: center; padding: 4px 0; border-bottom: 1px solid #1e293b; font-size: 0.76rem; }
     .stat-row:last-child { border-bottom: none; }
     .stat-tag { display: flex; align-items: center; gap: 8px; }
     .stat-pill { width: 10px; height: 10px; border-radius: 2px; flex-shrink: 0; }
     .stat-val { font-weight: 700; color: #f8fafc; }
 
-    .scene-result-box {
-      margin-top: 8px;
-      max-height: 150px;
-      overflow-y: auto;
-      display: flex;
-      flex-direction: column;
-      gap: 6px;
-    }
-    .scene-card {
-      background: #060a14;
-      border: 1px solid #1e293b;
-      padding: 6px 8px;
-      border-radius: 5px;
-      font-size: 0.72rem;
-    }
+    .scene-result-box { margin-top: 8px; max-height: 160px; overflow-y: auto; display: flex; flex-direction: column; gap: 6px; }
+    .scene-card { background: #060a14; border: 1px solid #1e293b; padding: 6px 8px; border-radius: 5px; font-size: 0.72rem; }
 
+    /* Custom Leaflet Controls */
     .leaflet-control-custom {
-      background: #0f172a;
-      border: 1px solid #38bdf8;
-      color: #ffffff;
-      padding: 6px 10px;
-      font-size: 0.75rem;
-      font-weight: 600;
-      border-radius: 4px;
-      cursor: pointer;
-      box-shadow: 0 2px 8px rgba(0,0,0,0.5);
-    }
-
-    .super-res-active {
-      filter: contrast(125%) saturate(120%) brightness(105%);
-      image-rendering: -webkit-optimize-contrast;
-      image-rendering: crisp-edges;
+      background: #0f172a; border: 1px solid #38bdf8; color: #ffffff;
+      padding: 6px 10px; font-size: 0.75rem; font-weight: 600; border-radius: 4px;
+      cursor: pointer; box-shadow: 0 2px 8px rgba(0,0,0,0.5);
     }
 
     /* Modal */
     #config-modal {
-      display: none;
-      position: fixed;
-      inset: 0;
-      background: rgba(0, 0, 0, 0.75);
-      backdrop-filter: blur(8px);
-      z-index: 3000;
-      align-items: center;
-      justify-content: center;
-      padding: 20px;
+      display: none; position: fixed; inset: 0; background: rgba(0, 0, 0, 0.75);
+      backdrop-filter: blur(8px); z-index: 3000; align-items: center; justify-content: center; padding: 20px;
     }
     .modal-content {
-      background: #0f172a;
-      border: 1px solid #334155;
-      border-radius: 12px;
-      max-width: 480px;
-      width: 100%;
-      padding: 20px;
-      position: relative;
+      background: #0f172a; border: 1px solid #334155; border-radius: 12px;
+      max-width: 480px; width: 100%; padding: 20px; position: relative;
     }
     .modal-close {
-      position: absolute; top: 12px; right: 12px;
-      background: #1e293b; border: none; color: #94a3b8;
-      width: 26px; height: 26px; border-radius: 6px; cursor: pointer;
-    }
-
-    @media (max-width: 768px) {
-      #app-container { flex-direction: column; }
-      #sidebar {
-        position: absolute; bottom: 0; left: 0; width: 100%; max-height: 52vh;
-        border-left: none; border-top: 2px solid rgba(56, 189, 248, 0.4);
-        border-radius: 18px 18px 0 0; z-index: 1001;
-      }
+      position: absolute; top: 12px; right: 12px; background: #1e293b; border: none;
+      color: #94a3b8; width: 26px; height: 26px; border-radius: 6px; cursor: pointer;
     }
   </style>
 </head>
 <body>
 
-  <!-- Hidden SVG for clipping satellite pane strictly to selected district -->
+  <!-- Dynamic SVG for isolated boundary clipping -->
   <svg width="0" height="0" style="position: absolute; pointer-events: none;">
     <defs>
       <clipPath id="districtClipPath" clipPathUnits="userSpaceOnUse">
@@ -281,42 +133,61 @@
       <div class="header-box">
         <div>
           <h2>Assam Space-GIS Engine</h2>
-          <p class="subtext">Live Copernicus Streaming & District Analytics</p>
-          <span id="status-badge"><i class="fa-solid fa-satellite"></i> Sentinel Hub Connected</span>
+          <p class="subtext">Multi-Temporal Satellite Streaming & Custom Extraction</p>
+          <span style="font-size: 0.68rem; padding: 3px 7px; border-radius: 4px; background: #0284c7; color: white; font-weight: 600; display: inline-block; margin-top: 4px;">
+            <i class="fa-solid fa-satellite"></i> Sentinel Engine Active
+          </span>
         </div>
         <div class="header-actions">
           <button class="btn-action" id="open-config-btn" title="Copernicus Settings"><i class="fa-solid fa-key"></i> Key</button>
         </div>
       </div>
 
-      <!-- 1. SPATIAL TARGETING -->
+      <!-- 1. SPATIAL TARGETING (DISTRICT + CUSTOM AOI) -->
       <div class="card">
-        <h3>1. Spatial Polygon Targeting</h3>
-        <label class="input-label" for="district-dropdown">Select District (Clips satellite stream):</label>
+        <h3>1. Spatial AOI & Polygon Clipping</h3>
+        <label class="input-label" for="district-dropdown">Select Predefined District:</label>
         <select id="district-dropdown">
           <option value="">-- Statewide (Unclipped Overview) --</option>
         </select>
 
+        <p style="font-size:0.72rem; color:#38bdf8; margin: 4px 0;">
+          <i class="fa-solid fa-draw-polygon"></i> <b>Draw Custom Area:</b> Use the polygon toolbar on the map to draw custom watersheds/parcels.
+        </p>
+
         <div style="display:flex; justify-content:space-between; align-items:center; margin-top:4px;">
           <label style="font-size:0.74rem; display:flex; align-items:center; gap:5px; cursor:pointer;">
             <input type="checkbox" id="clip-to-district-toggle" checked />
-            Clip Raster to Selected District
+            Clip Raster Inside Active Polygon
           </label>
         </div>
 
         <div class="slider-box" style="margin-top: 6px;">
           <div style="display: flex; justify-content: space-between;">
-            <span>District Border Outline Opacity</span>
+            <span>Border Outline Opacity</span>
             <span id="vector-opacity-val">60%</span>
           </div>
           <input type="range" id="vector-opacity" min="0" max="1" step="0.05" value="0.60" />
         </div>
       </div>
 
-      <!-- 2. SENSOR ANALYSIS PRESET -->
+      <!-- 2. MULTI-TEMPORAL CALENDAR SELECTOR -->
+      <div class="card">
+        <h3>2. Temporal Window & Calendar</h3>
+        <label class="input-label">Date Window (Pre & Post Monsoon Analysis):</label>
+        <input type="text" id="calendar-range" placeholder="Select Date or Range" />
+
+        <div style="display: flex; gap: 4px; margin-top: 4px;">
+          <button class="btn-action" style="flex:1;" onclick="setSeasonPreset('2026-03-01/2026-04-30')">Pre-Monsoon</button>
+          <button class="btn-action" style="flex:1;" onclick="setSeasonPreset('2026-07-01/2026-08-31')">Peak Flood</button>
+          <button class="btn-action" style="flex:1;" onclick="setSeasonPreset('2026-10-01/2026-11-01')">Post-Harvest</button>
+        </div>
+      </div>
+
+      <!-- 3. SENSOR ANALYSIS PRESET -->
       <div class="card">
         <h3>
-          <span>2. Sensor Analysis Preset</span>
+          <span>3. Live Spectral Analysis</span>
           <span class="badge" id="live-indicator">LIVE WMS</span>
         </h3>
         
@@ -345,42 +216,22 @@
           </div>
           <input type="range" id="copernicus-opacity" min="0" max="1" step="0.05" value="0.80" />
         </div>
-
-        <!-- RESOLUTION ALERT -->
-        <div class="zoom-alert" id="zoom-alert">
-          <i class="fa-solid fa-circle-info"></i>
-          <span>Resolution protection: Zoom in to Level 10+ or select a district to load full-res Sentinel tiles.</span>
-        </div>
       </div>
 
-      <!-- 3. SUPER-RESOLUTION -->
+      <!-- 4. MULTI-FORMAT EXPORT ENGINE -->
       <div class="card">
-        <h3>
-          <span>3. Super-Resolution (Deepness AI)</span>
-          <span class="ai-badge">ONNX Web</span>
-        </h3>
-        <p style="font-size:0.72rem; color:#94a3b8; margin-bottom: 6px;">
-          Simulates Deepness ONNX neural model sharpening, enhancing 10m Sentinel raster clarity.
-        </p>
-
-        <label style="font-size:0.74rem; display:flex; align-items:center; gap:6px; cursor:pointer;">
-          <input type="checkbox" id="ai-enhance-toggle" />
-          <b>Activate AI Super-Resolution Post-Processing</b>
-        </label>
-      </div>
-
-      <!-- 4. LIVE PRODUCT SEARCH -->
-      <div class="card">
-        <h3>4. Raw Scene Query & Download</h3>
-        <label class="input-label">Acquisition Date Target:</label>
-        <input type="date" id="search-date" value="2026-10-15" />
+        <h3>4. Export & Download (Current AOI)</h3>
+        <p style="font-size:0.72rem; color:#94a3b8;">Export active vector mask or raw satellite scenes matching the active bounding area.</p>
         
-        <button class="btn-live-search" onclick="searchLiveScenes()">
-          <i class="fa-solid fa-magnifying-glass"></i> Query CDSE STAC Over District
-        </button>
+        <div class="export-grid">
+          <button class="btn-export" onclick="exportAOI('geojson')"><i class="fa-solid fa-file-code"></i> GeoJSON</button>
+          <button class="btn-export" onclick="exportAOI('kml')"><i class="fa-solid fa-earth-americas"></i> KML</button>
+          <button class="btn-export" onclick="exportWMSBounds()"><i class="fa-solid fa-image"></i> BBox PNG</button>
+          <button class="btn-export" onclick="searchLiveScenes()"><i class="fa-solid fa-download"></i> Raw STAC ZIP</button>
+        </div>
 
         <div class="scene-result-box" id="scene-results">
-          <p style="font-size:0.72rem; color:#94a3b8;">Choose a district or zoom in to query raw Sentinel scenes.</p>
+          <p style="font-size:0.72rem; color:#94a3b8;">Raw scene archives will populate here upon clicking Raw STAC ZIP.</p>
         </div>
       </div>
 
@@ -407,29 +258,32 @@
       <button class="modal-close" id="close-config-modal">&times;</button>
       <h3 style="color: #38bdf8; margin-bottom: 8px;"><i class="fa-solid fa-satellite"></i> Copernicus Plugin Settings</h3>
       <p style="font-size: 0.78rem; color: #cbd5e1; margin-bottom: 12px; line-height: 1.4;">
-        Active Sentinel Hub Configuration Instance connected to your account.
+        Set your active Configuration Instance ID and toggle watermark behaviour.
       </p>
 
       <label class="input-label">Sentinel Hub Instance ID:</label>
       <input type="text" id="cfg-instance-id" />
       
-      <button class="btn-live-search" style="margin-top: 10px;" onclick="saveCopernicusConfig()">Save & Reload Live Stream</button>
+      <button class="btn-primary" style="margin-top: 10px;" onclick="saveCopernicusConfig()">Save & Reload Live Stream</button>
     </div>
   </div>
 
+  <!-- JavaScript Libraries -->
   <script src="https://unpkg.com/leaflet@1.9.4/dist/leaflet.js"></script>
+  <script src="https://cdnjs.cloudflare.com/ajax/libs/leaflet.draw/1.0.4/leaflet.draw.js"></script>
+  <script src="https://cdn.jsdelivr.net/npm/flatpickr"></script>
 
   <script>
-    // 1. Instance ID
+    // 1. Instance ID Initialization
     let COPERNICUS_INSTANCE_ID = localStorage.getItem('cdse_instance_id') || 'a487ee8c-498a-422c-9cfd-015d1cfb6bb8';
     document.getElementById('cfg-instance-id').value = COPERNICUS_INSTANCE_ID;
 
-    // 2. Leaflet Map Initialization
+    // 2. Leaflet Map Init
     const assamBounds = L.latLngBounds(L.latLng(23.5, 89.2), L.latLng(28.5, 96.5));
     const map = L.map('map', {
       center: [26.2006, 92.9376],
       zoom: 8,
-      minZoom: 5,
+      minZoom: 6,
       maxZoom: 18,
       maxBounds: assamBounds,
       zoomControl: true
@@ -442,7 +296,7 @@
     map.createPane('districtPane');
     map.getPane('districtPane').style.zIndex = 500;
 
-    // Base Layer: Google Satellite Hybrid (Always visible)
+    // High-Resolution Satellite Basemap
     const googleHybrid = L.tileLayer('https://mt1.google.com/vt/lyrs=y&x={x}&y={y}&z={z}', {
       maxZoom: 20,
       attribution: 'Base &copy; Google Satellite'
@@ -458,36 +312,75 @@
     let currentVectorOpacity = 0.60;
     let footprintsLayer = L.layerGroup().addTo(map);
 
-    // Force map to recognize size immediately
-    setTimeout(() => { map.invalidateSize(); }, 200);
+    // 3. Leaflet Draw Setup (Custom Polygons)
+    const drawnItems = new L.FeatureGroup();
+    map.addLayer(drawnItems);
 
-    // 3. Resolution Check to Avoid the 200m tile error
-    function checkZoomLimits() {
-      const zoom = map.getZoom();
-      const zoomAlert = document.getElementById('zoom-alert');
-      const activeLayer = document.getElementById('copernicus-layer-select').value;
+    const drawControl = new L.Control.Draw({
+      position: 'topleft',
+      draw: {
+        polyline: false,
+        circle: false,
+        circlemarker: false,
+        rectangle: true,
+        polygon: {
+          allowIntersection: false,
+          showArea: true,
+          drawError: { color: '#ef4444', message: '<strong>Error:</strong> shape edges cannot cross!' },
+          shapeOptions: { color: '#38bdf8', weight: 2, fillOpacity: 0.1 }
+        }
+      },
+      edit: { featureGroup: drawnItems, remove: true }
+    });
+    map.addControl(drawControl);
+
+    map.on(L.Draw.Event.CREATED, function (e) {
+      drawnItems.clearLayers();
+      const layer = e.layer;
+      drawnItems.addLayer(layer);
       
-      // If zoomed out (< 10) without a district chosen, notify user
-      if (zoom < 10 && activeLayer !== 'OFF' && !selectedDistrictFeature) {
-        zoomAlert.style.display = 'flex';
-      } else {
-        zoomAlert.style.display = 'none';
-      }
-    }
+      // Convert drawn geometry to GeoJSON feature and make it the active clipping target
+      selectedDistrictFeature = layer.toGeoJSON();
+      document.getElementById('district-dropdown').value = "";
+      updateDistrictClipMask();
+      map.fitBounds(layer.getBounds(), { padding: [25, 25] });
+    });
 
-    map.on('zoomend', () => {
-      checkZoomLimits();
+    map.on(L.Draw.Event.DELETED, function () {
+      selectedDistrictFeature = null;
       updateDistrictClipMask();
     });
-    map.on('moveend', updateDistrictClipMask);
 
-    // 4. Safe Polygon Clipping (NEVER clips to an empty path)
+    // 4. Calendar Multi-Temporal Date Control
+    let selectedTimeRange = "2026-10-01/2026-11-02";
+    const datePicker = flatpickr("#calendar-range", {
+      mode: "range",
+      dateFormat: "Y-m-d",
+      defaultDate: ["2026-10-01", "2026-11-02"],
+      theme: "dark",
+      onChange: function(selectedDates, dateStr) {
+        if (selectedDates.length === 2) {
+          const start = selectedDates[0].toISOString().split('T')[0];
+          const end = selectedDates[1].toISOString().split('T')[0];
+          selectedTimeRange = `${start}/${end}`;
+          reloadCopernicusStream();
+        }
+      }
+    });
+
+    function setSeasonPreset(range) {
+      selectedTimeRange = range;
+      const parts = range.split('/');
+      datePicker.setDate(parts);
+      reloadCopernicusStream();
+    }
+
+    // 5. Safe Polygon Masking (SVG ClipPath)
     function updateDistrictClipMask() {
       const clipToggle = document.getElementById('clip-to-district-toggle').checked;
       const copernicusPane = map.getPane('copernicusPane');
       const clipPathData = document.getElementById('districtClipPathData');
 
-      // CRITICAL: If no district is selected or toggle is off, remove clipping entirely!
       if (!clipToggle || !selectedDistrictFeature) {
         copernicusPane.style.clipPath = 'none';
         copernicusPane.style.webkitClipPath = 'none';
@@ -520,7 +413,9 @@
       }
     }
 
-    // 5. Live Copernicus Layer Loader
+    map.on('zoomend moveend', updateDistrictClipMask);
+
+    // 6. Live Copernicus Layer Loader
     function updateCopernicusLiveLayer(layerName) {
       if (copernicusWmsLayer) {
         map.removeLayer(copernicusWmsLayer);
@@ -530,7 +425,6 @@
       if (layerName === "OFF") {
         document.getElementById('live-indicator').innerText = "PAUSED";
         document.getElementById('live-indicator').style.background = "#64748b";
-        checkZoomLimits();
         return;
       }
 
@@ -545,33 +439,77 @@
         transparent: true,
         pane: 'copernicusPane',
         opacity: currentCopernicusOpacity,
-        minZoom: 9, // Prevent tile error at world/country scale
+        minZoom: 9,
         maxZoom: 18,
-        attribution: '&copy; Copernicus Data Space Ecosystem'
+        time: selectedTimeRange, // Calendar window injected here
+        showLogo: false,         // Instructs Sentinel Hub to omit watermark
+        attribution: '&copy; Copernicus Data Space'
       }).addTo(map);
 
-      checkZoomLimits();
       updateDistrictClipMask();
+    }
+
+    function reloadCopernicusStream() {
+      const activeLayer = document.getElementById('copernicus-layer-select').value;
+      updateCopernicusLiveLayer(activeLayer);
     }
 
     // Initialize Default Layer
     updateCopernicusLiveLayer(document.getElementById('copernicus-layer-select').value);
 
-    // 6. AI Enhancement Toggle
-    document.getElementById('ai-enhance-toggle').addEventListener('change', (e) => {
-      const pane = map.getPane('copernicusPane');
-      if (e.target.checked) {
-        pane.classList.add('super-res-active');
-      } else {
-        pane.classList.remove('super-res-active');
+    // 7. Multi-Format Export Engine
+    function exportAOI(format) {
+      if (!selectedDistrictFeature) {
+        alert("Please select a district or draw a custom polygon on the map first!");
+        return;
       }
-    });
 
-    // 7. Live STAC Query Engine
+      let content = "";
+      let filename = `assam_aoi_${Date.now()}`;
+      let mimeType = "";
+
+      if (format === 'geojson') {
+        content = JSON.stringify(selectedDistrictFeature, null, 2);
+        filename += ".geojson";
+        mimeType = "application/json";
+      } else if (format === 'kml') {
+        const coords = selectedDistrictFeature.geometry.coordinates[0]
+          .map(c => `${c[0]},${c[1]},0`).join(" ");
+        content = `<?xml version="1.0" encoding="UTF-8"?>
+<kml xmlns="http://www.opengis.net/kml/2.2">
+  <Placemark>
+    <name>Assam AOI Export</name>
+    <Polygon><outerBoundaryIs><LinearRing><coordinates>${coords}</coordinates></LinearRing></outerBoundaryIs></Polygon>
+  </Placemark>
+</kml>`;
+        filename += ".kml";
+        mimeType = "application/vnd.google-earth.kml+xml";
+      }
+
+      const blob = new Blob([content], { type: mimeType });
+      const url = URL.createObjectURL(blob);
+      const a = document.createElement('a');
+      a.href = url;
+      a.download = filename;
+      a.click();
+      URL.revokeObjectURL(url);
+    }
+
+    function exportWMSBounds() {
+      const b = selectedDistrictFeature ? L.geoJSON(selectedDistrictFeature).getBounds() : map.getBounds();
+      const layer = document.getElementById('copernicus-layer-select').value;
+      if (layer === "OFF") return alert("Please select an active satellite layer first!");
+
+      const bboxStr = `${b.getWest()},${b.getSouth()},${b.getEast()},${b.getNorth()}`;
+      const imgUrl = `https://sh.dataspace.copernicus.eu/ogc/wms/${COPERNICUS_INSTANCE_ID}?SERVICE=WMS&REQUEST=GetMap&LAYERS=${layer}&BBOX=${bboxStr}&WIDTH=1024&HEIGHT=1024&FORMAT=image/png&CRS=EPSG:4326&TIME=${selectedTimeRange}&SHOWLOGO=false`;
+      
+      window.open(imgUrl, '_blank');
+    }
+
+    // 8. Live STAC Query Engine
     async function searchLiveScenes() {
       const b = selectedDistrictFeature ? L.geoJSON(selectedDistrictFeature).getBounds() : map.getBounds();
       const resContainer = document.getElementById('scene-results');
-      const targetDate = document.getElementById('search-date').value || '2026-10-15';
       const activeLayer = document.getElementById('copernicus-layer-select').value;
       const isSAR = activeLayer === 'SENTINEL-1-FLOOD';
 
@@ -579,10 +517,12 @@
       footprintsLayer.clearLayers();
 
       const bbox = [b.getWest(), b.getSouth(), b.getEast(), b.getNorth()];
+      const timeParts = selectedTimeRange.split('/');
+      
       const payload = {
         "collections": [isSAR ? "SENTINEL-1-GRD" : "SENTINEL-2-L2A"],
         "bbox": bbox,
-        "datetime": `${targetDate}T00:00:00Z/${targetDate}T23:59:59Z`,
+        "datetime": `${timeParts[0]}T00:00:00Z/${timeParts[1]}T23:59:59Z`,
         "limit": 4
       };
 
@@ -595,7 +535,7 @@
         const data = await response.json();
 
         if (!data.features || data.features.length === 0) {
-          resContainer.innerHTML = '<p style="color:#94a3b8; font-size:0.72rem;">No scenes on this exact day. Try an earlier or later date.</p>';
+          resContainer.innerHTML = '<p style="color:#94a3b8; font-size:0.72rem;">No scenes found within this date range. Broaden your calendar range.</p>';
           return;
         }
 
@@ -612,7 +552,7 @@
           resContainer.innerHTML += `
             <div class="scene-card">
               <strong style="color:#38bdf8;">${feat.id.substring(0, 24)}...</strong><br>
-              Cloud: ${props["eo:cloud_cover"] !== undefined ? props["eo:cloud_cover"].toFixed(1) + "%" : "Radar"}<br>
+              Cloud: ${props["eo:cloud_cover"] !== undefined ? props["eo:cloud_cover"].toFixed(1) + "%" : "Radar Mode"}<br>
               <a href="${downloadUrl}" target="_blank" style="color: #38bdf8; text-decoration: none; font-weight: 600;">
                 <i class="fa-solid fa-download"></i> Direct ZIP Download
               </a>
@@ -624,7 +564,7 @@
       }
     }
 
-    // 8. District Analytics & Chart
+    // 9. District Analytics & Chart
     const classes = [
       { key: 'pct_forest', label: 'Dense Forest Canopy', color: '#1b7837' },
       { key: 'pct_shrub_tea', label: 'Tea & Shrubland', color: '#78c679' },
@@ -700,12 +640,12 @@
     }
 
     function selectDistrict(name) {
+      drawnItems.clearLayers();
       if (!name) {
         selectedDistrictFeature = null;
         updateDistrictClipMask();
         computeStatewideAverages();
         if (districtLayer) districtLayer.resetStyle();
-        checkZoomLimits();
         return;
       }
       const item = districtLookup[name];
@@ -728,17 +668,14 @@
       }
 
       item.layer.bringToFront();
-      
-      // Auto zoom to Level 10+ so the 200m resolution limit is satisfied
       map.fitBounds(item.layer.getBounds(), { padding: [25, 25], maxZoom: 12 });
       
       updateDistrictClipMask();
       updateChart(name, "District LULC Satellite Composition", item.feature.properties, false);
       document.getElementById('district-dropdown').value = name;
-      checkZoomLimits();
     }
 
-    // 9. Load Districts GeoJSON with safe Fallback
+    // 10. Load Districts GeoJSON
     function initGeoJSON(data) {
       data.features = data.features.filter(f => 
         f.geometry && (f.geometry.type === 'Polygon' || f.geometry.type === 'MultiPolygon')
@@ -777,19 +714,13 @@
       map.invalidateSize();
     }
 
-    // Try relative path first
     fetch('assam_districts.geojson.json')
-      .then(res => {
-        if (!res.ok) throw new Error("Local HTTP file not reachable");
-        return res.json();
-      })
+      .then(res => res.json())
       .then(data => initGeoJSON(data))
       .catch(err => {
-        console.warn("Falling back to root or alternative path:", err);
         fetch('assam_districts.geojson')
           .then(res => res.json())
-          .then(data => initGeoJSON(data))
-          .catch(e => console.error("Could not load district geojson file. Make sure file is in same directory:", e));
+          .then(data => initGeoJSON(data));
       });
 
     // Reset View Button Control
@@ -801,13 +732,13 @@
         btn.onclick = () => {
           document.getElementById('district-dropdown').value = '';
           selectedDistrictFeature = null;
+          drawnItems.clearLayers();
           updateDistrictClipMask();
           if (districtLayer) {
             districtLayer.resetStyle();
             map.fitBounds(districtLayer.getBounds(), { padding: [15, 15] });
           }
           computeStatewideAverages();
-          checkZoomLimits();
         };
         return btn;
       }
@@ -848,7 +779,7 @@
       if (enteredId) {
         COPERNICUS_INSTANCE_ID = enteredId;
         localStorage.setItem('cdse_instance_id', enteredId);
-        updateCopernicusLiveLayer(document.getElementById('copernicus-layer-select').value);
+        reloadCopernicusStream();
         cfgModal.style.display = 'none';
       }
     }
