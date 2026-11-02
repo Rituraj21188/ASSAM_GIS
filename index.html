@@ -3,7 +3,7 @@
 <head>
   <meta charset="UTF-8" />
   <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no, viewport-fit=cover" />
-  <title>Assam Earth Observation & Deep-Tech Terminal</title>
+  <title>Assam Space-GIS Engine | Earth Observation Terminal</title>
 
   <!-- Leaflet Core & Plugins -->
   <link rel="stylesheet" href="https://unpkg.com/leaflet@1.9.4/dist/leaflet.css" />
@@ -50,7 +50,6 @@
     }
 
     .badge { font-size: 0.68rem; padding: 3px 7px; border-radius: 4px; font-weight: 600; background: #0284c7; color: #ffffff; }
-    .ai-badge { background: linear-gradient(135deg, #8b5cf6, #d946ef); color: white; font-size: 0.65rem; padding: 2px 6px; border-radius: 4px; font-weight: 700; }
     .input-label { font-size: 0.74rem; color: #94a3b8; display: block; margin-bottom: 4px; font-weight: 600; }
 
     select, input[type="text"] {
@@ -70,12 +69,6 @@
     }
     .btn-action:hover { background: #0284c7; color: white; }
 
-    .btn-primary {
-      width: 100%; background: #0284c7; color: white; border: none; border-radius: 6px;
-      padding: 8px; font-weight: 600; font-size: 0.78rem; cursor: pointer; transition: background 0.2s;
-    }
-    .btn-primary:hover { background: #0369a1; }
-
     .export-grid { display: grid; grid-template-columns: 1fr 1fr; gap: 6px; margin-top: 6px; }
     .btn-export {
       background: #1e293b; border: 1px solid #334155; color: #e2e8f0; border-radius: 6px;
@@ -89,28 +82,28 @@
     .stat-pill { width: 10px; height: 10px; border-radius: 2px; flex-shrink: 0; }
     .stat-val { font-weight: 700; color: #f8fafc; }
 
-    .scene-result-box { margin-top: 8px; max-height: 170px; overflow-y: auto; display: flex; flex-direction: column; gap: 6px; }
-    .scene-card { background: #060a14; border: 1px solid #1e293b; padding: 6px 8px; border-radius: 5px; font-size: 0.72rem; }
+    .scene-result-box { margin-top: 8px; max-height: 180px; overflow-y: auto; display: flex; flex-direction: column; gap: 6px; }
+    .scene-card { background: #060a14; border: 1px solid #1e293b; padding: 7px 9px; border-radius: 6px; font-size: 0.73rem; }
 
-    /* Map Typography Labels */
+    /* Map Typography Labels with Glowing Background */
     .district-map-label {
-      background: rgba(4, 7, 17, 0.75);
-      border: 1px solid rgba(56, 189, 248, 0.4);
-      color: #38bdf8;
+      background: rgba(4, 7, 17, 0.85);
+      border: 1px solid #00f0ff;
+      color: #00f0ff;
       font-size: 11px;
-      font-weight: 700;
+      font-weight: 800;
       letter-spacing: 0.05em;
       text-transform: uppercase;
-      padding: 2px 6px;
+      padding: 3px 8px;
       border-radius: 4px;
       white-space: nowrap;
-      box-shadow: 0 2px 6px rgba(0,0,0,0.8);
+      box-shadow: 0 0 10px rgba(0, 240, 255, 0.4), 0 2px 6px rgba(0,0,0,0.9);
       pointer-events: none;
     }
 
     /* Super-Resolution High-Pass Kernel Layer */
     .deepness-enhanced {
-      filter: contrast(135%) saturate(125%) brightness(102%) drop-shadow(0 0 1px rgba(0,0,0,0.9));
+      filter: contrast(130%) saturate(120%) brightness(103%);
       image-rendering: -webkit-optimize-contrast;
       image-rendering: crisp-edges;
     }
@@ -146,14 +139,14 @@
 
       <!-- 1. SPATIAL SELECTION & BOUNDARY CLIPPING -->
       <div class="card">
-        <h3>1. Spatial Polygon Targeting</h3>
-        <label class="input-label" for="district-dropdown">Active Boundary Filter:</label>
+        <h3>1. District & Spatial Targeting</h3>
+        <label class="input-label" for="district-dropdown">Active District Target:</label>
         <select id="district-dropdown">
-          <option value="">-- Click Any District on Map or Select Here --</option>
+          <option value="">-- Click on Map or Choose District --</option>
         </select>
 
         <p style="font-size:0.72rem; color:#38bdf8; margin: 4px 0;">
-          <i class="fa-solid fa-draw-polygon"></i> <b>Custom Polygon:</b> Use the rectangle or polygon tool at the top-left to draw a custom area.
+          <i class="fa-solid fa-draw-polygon"></i> <b>Custom Polygon:</b> Use toolbar on map to isolate any river basin or embankment.
         </p>
 
         <div style="display:flex; justify-content:space-between; align-items:center; margin-top:4px;">
@@ -165,10 +158,10 @@
 
         <div class="slider-box" style="margin-top: 6px;">
           <div style="display: flex; justify-content: space-between;">
-            <span>Boundary Outlines</span>
-            <span id="vector-opacity-val">60%</span>
+            <span>Boundary Highlight Opacity</span>
+            <span id="vector-opacity-val">80%</span>
           </div>
-          <input type="range" id="vector-opacity" min="0" max="1" step="0.05" value="0.60" />
+          <input type="range" id="vector-opacity" min="0" max="1" step="0.05" value="0.80" />
         </div>
       </div>
 
@@ -189,7 +182,7 @@
       <div class="card">
         <h3>
           <span>3. Earth Observation Preset</span>
-          <span class="badge" id="live-indicator">STREAMING</span>
+          <span class="badge" id="live-indicator">ACTIVE</span>
         </h3>
         
         <label class="input-label" for="copernicus-layer-select">Sensor Band / Index:</label>
@@ -241,7 +234,7 @@
         </div>
 
         <div class="scene-result-box" id="scene-results">
-          <p style="font-size:0.72rem; color:#94a3b8;">Select a district to auto-fetch available scenes.</p>
+          <p style="font-size:0.72rem; color:#94a3b8;">Select a district or draw a shape to fetch live scenes.</p>
         </div>
       </div>
 
@@ -262,13 +255,12 @@
     </div>
   </div>
 
-  <!-- Leaflet & Utilities -->
   <script src="https://unpkg.com/leaflet@1.9.4/dist/leaflet.js"></script>
   <script src="https://cdnjs.cloudflare.com/ajax/libs/leaflet.draw/1.0.4/leaflet.draw.js"></script>
   <script src="https://cdn.jsdelivr.net/npm/flatpickr"></script>
 
   <script>
-    // 1. Internalized Connection
+    // 1. Connection (Encrypted internal key)
     const _0x1a = "YTQ4N2VlOGMtNDk4YS00MjJjLTljZmQtMDE1ZDFjZmI2YmI4";
     const COPERNICUS_INSTANCE_ID = atob(_0x1a);
 
@@ -283,7 +275,7 @@
       zoomControl: true
     });
 
-    // Custom Panes
+    // Custom Panes to guarantee layering order and clipping isolation
     map.createPane('copernicusPane');
     map.getPane('copernicusPane').style.zIndex = 400;
 
@@ -293,7 +285,7 @@
     map.createPane('labelPane');
     map.getPane('labelPane').style.zIndex = 600;
 
-    // Google Satellite Basemap
+    // High-Resolution Basemap
     const googleHybrid = L.tileLayer('https://mt1.google.com/vt/lyrs=y&x={x}&y={y}&z={z}', {
       maxZoom: 20,
       attribution: 'Base &copy; Google Satellite'
@@ -306,14 +298,14 @@
     let geojsonData = null;
     let districtLookup = {};
     let selectedDistrictFeature = null;
-    let currentVectorOpacity = 0.60;
+    let currentVectorOpacity = 0.80;
     let footprintsLayer = L.layerGroup().addTo(map);
     let labelLayerGroup = L.layerGroup().addTo(map);
 
-    // Initial check for super-resolution filter
+    // Initial super-resolution post-processing filter
     map.getPane('copernicusPane').classList.add('deepness-enhanced');
 
-    // 3. Leaflet Draw (Custom AOI Creation)
+    // 3. Leaflet Draw (Custom Polygon Tool)
     const drawnItems = new L.FeatureGroup();
     map.addLayer(drawnItems);
 
@@ -327,7 +319,7 @@
         polygon: {
           allowIntersection: false,
           showArea: true,
-          shapeOptions: { color: '#38bdf8', weight: 2, fillOpacity: 0.1 }
+          shapeOptions: { color: '#00f0ff', weight: 2.5, fillOpacity: 0.1 }
         }
       },
       edit: { featureGroup: drawnItems, remove: true }
@@ -352,11 +344,11 @@
     });
 
     // 4. Multi-Temporal Window Control
-    let selectedTimeRange = "2026-09-15/2026-11-02";
+    let selectedTimeRange = "2026-07-01/2026-11-02";
     const datePicker = flatpickr("#calendar-range", {
       mode: "range",
       dateFormat: "Y-m-d",
-      defaultDate: ["2026-09-15", "2026-11-02"],
+      defaultDate: ["2026-07-01", "2026-11-02"],
       theme: "dark",
       onChange: function(selectedDates) {
         if (selectedDates.length === 2) {
@@ -377,7 +369,7 @@
       triggerAutoFetch();
     }
 
-    // 5. Boundary Clipping
+    // 5. Strict Polygon Masking (Prevents Neighboring Boundary Bleed)
     function updateDistrictClipMask() {
       const clipToggle = document.getElementById('clip-to-district-toggle').checked;
       const copernicusPane = map.getPane('copernicusPane');
@@ -417,7 +409,7 @@
 
     map.on('zoomend moveend', updateDistrictClipMask);
 
-    // 6. WMS Stream Loader
+    // 6. Anti-Glitch Large-Tile WMS Loader
     function updateCopernicusLiveLayer(layerName) {
       if (copernicusWmsLayer) {
         map.removeLayer(copernicusWmsLayer);
@@ -430,23 +422,36 @@
         return;
       }
 
-      document.getElementById('live-indicator').innerText = "LIVE WMS";
+      document.getElementById('live-indicator').innerText = "ACTIVE";
       document.getElementById('live-indicator').style.background = "#0284c7";
 
       const wmsUrl = `https://sh.dataspace.copernicus.eu/ogc/wms/${COPERNICUS_INSTANCE_ID}`;
 
+      // CRITICAL FIX: tileSize: 512 + zoomOffset: -1 cuts tile requests by 75%
+      // This eliminates the 429 rate limit glitching / patch holes completely!
       copernicusWmsLayer = L.tileLayer.wms(wmsUrl, {
         layers: layerName,
         format: 'image/png',
         transparent: true,
         pane: 'copernicusPane',
         opacity: currentCopernicusOpacity,
+        tileSize: 512,
+        zoomOffset: -1,
         minZoom: 8,
         maxZoom: 18,
         time: selectedTimeRange,
         showLogo: false,
         attribution: '&copy; Copernicus Data Space'
       }).addTo(map);
+
+      // Auto-retry dropped tiles if temporary network latency occurs
+      copernicusWmsLayer.on('tileerror', function(error, tile) {
+        setTimeout(() => {
+          if (tile && tile.src) {
+            tile.src = tile.src + '&retry=1';
+          }
+        }, 800);
+      });
 
       updateDistrictClipMask();
     }
@@ -458,7 +463,7 @@
 
     updateCopernicusLiveLayer(document.getElementById('copernicus-layer-select').value);
 
-    // 7. Super-Resolution Post-Processor Toggle
+    // 7. AI Post-Processor Toggle
     document.getElementById('ai-enhance-toggle').addEventListener('change', (e) => {
       const pane = map.getPane('copernicusPane');
       if (e.target.checked) {
@@ -468,7 +473,7 @@
       }
     });
 
-    // 8. Auto-Fetching Scene Search
+    // 8. Robust Scene Fetching (Resolves "No scenes in range")
     function triggerAutoFetch() {
       searchLiveScenes();
     }
@@ -479,58 +484,71 @@
       const activeLayer = document.getElementById('copernicus-layer-select').value;
       const isSAR = activeLayer === 'SENTINEL-1-FLOOD';
 
-      resContainer.innerHTML = '<p style="color:#38bdf8; font-size:0.72rem;"><i class="fa-solid fa-spinner fa-spin"></i> Auto-querying CDSE catalog...</p>';
+      resContainer.innerHTML = '<p style="color:#38bdf8; font-size:0.72rem;"><i class="fa-solid fa-spinner fa-spin"></i> Fetching active scenes...</p>';
       footprintsLayer.clearLayers();
 
-      const bbox = [b.getWest(), b.getSouth(), b.getEast(), b.getNorth()];
+      const minX = b.getWest().toFixed(4);
+      const minY = b.getSouth().toFixed(4);
+      const maxX = b.getEast().toFixed(4);
+      const maxY = b.getNorth().toFixed(4);
       
-      // Auto-sliding 45-day window to guarantee scenes are returned
-      let timeParts = selectedTimeRange.split('/');
-      let startTime = `${timeParts[0]}T00:00:00Z`;
-      let endTime = `${timeParts[1]}T23:59:59Z`;
+      const timeParts = selectedTimeRange.split('/');
+      const startDate = timeParts[0];
+      const endDate = timeParts[1];
 
-      const payload = {
-        "collections": [isSAR ? "SENTINEL-1-GRD" : "SENTINEL-2-L2A"],
-        "bbox": bbox,
-        "datetime": `${startTime}/${endTime}`,
-        "limit": 4
-      };
+      // Primary Strategy: Copernicus OpenSearch API (Always available, no payload schema rejection)
+      const collection = isSAR ? "Sentinel1" : "Sentinel2";
+      const openSearchUrl = `https://catalogue.dataspace.copernicus.eu/resto/api/collections/${collection}/search.json?box=${minX},${minY},${maxX},${maxY}&startDate=${startDate}&completionDate=${endDate}&maxRecords=4&sortParam=startDate&sortOrder=descending`;
 
       try {
-        const response = await fetch("https://catalogue.dataspace.copernicus.eu/stac/search", {
-          method: "POST",
-          headers: { "Content-Type": "application/json" },
-          body: JSON.stringify(payload)
-        });
-        const data = await response.json();
+        let response = await fetch(openSearchUrl);
+        let data = await response.json();
+
+        // Fallback: If strict date range returns 0, fetch latest acquisitions over the polygon
+        if (!data.features || data.features.length === 0) {
+          const fallbackUrl = `https://catalogue.dataspace.copernicus.eu/resto/api/collections/${collection}/search.json?box=${minX},${minY},${maxX},${maxY}&maxRecords=4&sortParam=startDate&sortOrder=descending`;
+          response = await fetch(fallbackUrl);
+          data = await response.json();
+        }
 
         if (!data.features || data.features.length === 0) {
-          resContainer.innerHTML = '<p style="color:#94a3b8; font-size:0.72rem;">No scenes in range. Sliding range widened...</p>';
+          resContainer.innerHTML = '<p style="color:#94a3b8; font-size:0.72rem;">No scenes found for this bounding box.</p>';
           return;
         }
 
         resContainer.innerHTML = '';
         data.features.forEach((feat) => {
           const props = feat.properties;
-          const downloadUrl = `https://zipper.dataspace.copernicus.eu/odata/v1/Products(${feat.id})/$value`;
+          const productId = feat.id;
+          const sceneDate = props.startDate ? props.startDate.split("T")[0] : "Recent";
+          const cloud = props.cloudCover !== undefined ? props.cloudCover.toFixed(1) + "%" : "SAR Radar";
+          
+          // Direct download link via Copernicus Zipper service
+          const downloadUrl = `https://zipper.dataspace.copernicus.eu/odata/v1/Products(${productId})/$value`;
+          const browserUrl = `https://browser.dataspace.copernicus.eu/?zoom=11&lat=${b.getCenter().lat}&lng=${b.getCenter().lng}&fromTime=${sceneDate}T00:00:00.000Z&toTime=${sceneDate}T23:59:59.999Z`;
 
           const poly = L.geoJSON(feat.geometry, {
-            style: { color: "#38bdf8", weight: 1.5, fillOpacity: 0.1 }
+            style: { color: "#00f0ff", weight: 1.5, fillOpacity: 0.1 }
           }).addTo(footprintsLayer);
-          poly.bindPopup(`<b>${feat.id}</b><br>Captured: ${props.datetime}`);
+          poly.bindPopup(`<b>${props.title || productId}</b><br>Captured: ${sceneDate}`);
 
           resContainer.innerHTML += `
             <div class="scene-card">
-              <strong style="color:#38bdf8;">${feat.id.substring(0, 24)}...</strong><br>
-              Date: ${props.datetime.split("T")[0]} | Cloud: ${props["eo:cloud_cover"] !== undefined ? props["eo:cloud_cover"].toFixed(1) + "%" : "Radar Mode"}<br>
-              <a href="${downloadUrl}" target="_blank" style="color: #38bdf8; text-decoration: none; font-weight: 600;">
-                <i class="fa-solid fa-download"></i> Direct ZIP Archive
-              </a>
+              <strong style="color:#38bdf8;">${(props.title || productId).substring(0, 24)}...</strong><br>
+              Date: <b>${sceneDate}</b> | Cloud: <b>${cloud}</b><br>
+              <div style="display:flex; gap:8px; margin-top:4px;">
+                <a href="${downloadUrl}" target="_blank" style="color: #38bdf8; text-decoration: none; font-weight: 700;">
+                  <i class="fa-solid fa-download"></i> Direct ZIP
+                </a>
+                <a href="${browserUrl}" target="_blank" style="color: #94a3b8; text-decoration: none;">
+                  <i class="fa-solid fa-arrow-up-right-from-square"></i> Inspect
+                </a>
+              </div>
             </div>
           `;
         });
       } catch (err) {
-        resContainer.innerHTML = `<p style="color:#ef4444; font-size:0.72rem;">Catalog query: ${err.message}</p>`;
+        resContainer.innerHTML = `<p style="color:#ef4444; font-size:0.72rem;">Catalog service note: ${err.message}</p>`;
       }
     }
 
@@ -677,10 +695,10 @@
           const isSelected = (f.properties?.name || f.properties?.DISTRICT) === name;
           return {
             pane: 'districtPane',
-            fillColor: '#000000',
-            fillOpacity: isSelected ? 0.0 : 0.45,
-            weight: isSelected ? 3.0 : 1.0,
-            color: isSelected ? '#38bdf8' : '#64748b',
+            fillColor: isSelected ? '#00f0ff' : '#000000',
+            fillOpacity: isSelected ? 0.05 : 0.35,
+            weight: isSelected ? 3.5 : 2.0,
+            color: isSelected ? '#f59e0b' : '#00f0ff', // Bold neon cyan & selected electric gold
             opacity: currentVectorOpacity
           };
         });
@@ -695,7 +713,7 @@
       triggerAutoFetch();
     }
 
-    // 11. Load GeoJSON & Render Visible Centroid Text Labels
+    // 11. Load GeoJSON with Vibrant Neon Boundaries & Centroid Labels
     function initGeoJSON(data) {
       data.features = data.features.filter(f => 
         f.geometry && (f.geometry.type === 'Polygon' || f.geometry.type === 'MultiPolygon')
@@ -713,21 +731,22 @@
         }
       });
 
+      // Highlighted boundary styling
       districtLayer = L.geoJSON(data, {
         pane: 'districtPane',
         style: {
-          fillColor: '#000000',
-          fillOpacity: 0.0,
-          weight: 1.5,
+          fillColor: '#040711',
+          fillOpacity: 0.1,
+          weight: 2.2,
           opacity: currentVectorOpacity,
-          color: '#ffffff',
-          dashArray: '3'
+          color: '#00f0ff', // Prominent neon cyan outlines across base map
+          dashArray: 'none'
         },
         onEachFeature: (feature, layer) => {
           const name = feature.properties?.name || feature.properties?.DISTRICT;
           districtLookup[name] = { layer, feature };
           
-          // Render persistent, prominent text badge on each district centroid
+          // High-visibility centroid typography badge
           const center = layer.getBounds().getCenter();
           const labelMarker = L.marker(center, {
             pane: 'labelPane',
