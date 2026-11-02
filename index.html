@@ -478,78 +478,127 @@
       searchLiveScenes();
     }
 
-    async function searchLiveScenes() {
+async function searchLiveScenes() {
       const b = selectedDistrictFeature ? L.geoJSON(selectedDistrictFeature).getBounds() : map.getBounds();
       const resContainer = document.getElementById('scene-results');
       const activeLayer = document.getElementById('copernicus-layer-select').value;
       const isSAR = activeLayer === 'SENTINEL-1-FLOOD';
 
-      resContainer.innerHTML = '<p style="color:#38bdf8; font-size:0.72rem;"><i class="fa-solid fa-spinner fa-spin"></i> Fetching active scenes...</p>';
+      resContainer.innerHTML = '<p style="color:#38bdf8; font-size:0.72rem;"><i class="fa-solid fa-spinner fa-spin"></i> Querying satellite catalog...</p>';
       footprintsLayer.clearLayers();
 
-      const minX = b.getWest().toFixed(4);
-      const minY = b.getSouth().toFixed(4);
-      const maxX = b.getEast().toFixed(4);
-      const maxY = b.getNorth().toFixed(4);
-      
+      const minX = Math.max(-180, b.getWest()).toFixed(4);
+      const minY = Math.max(-90, b.getSouth()).toFixed(4);
+      const maxX = Math.min(180, b.getEast()).toFixed(4);
+      const maxY = Math.min(90, b.getNorth()).toFixed(4);
+      const bbox = [parseFloat(minX), parseFloat(minY), parseFloat(maxX), parseFloat(maxY)];
+
       const timeParts = selectedTimeRange.split('/');
       const startDate = timeParts[0];
       const endDate = timeParts[1];
 
-      // Primary Strategy: Copernicus OpenSearch API (Always available, no payload schema rejection)
-      const collection = isSAR ? "Sentinel1" : "Sentinel2";
-      const openSearchUrl = `https://catalogue.dataspace.copernicus.eu/resto/api/collections/${collection}/search.json?box=${minX},${minY},${maxX},${maxY}&startDate=${startDate}&completionDate=${endDate}&maxRecords=4&sortParam=startDate&sortOrder=descending`;
+      let features = [];
 
+      // Strategy 1: CORS-compliant Copernicus OData API (GET query, no preflight CORS block)
       try {
-        let response = await fetch(openSearchUrl);
-        let data = await response.json();
+        const collectionName = isSAR ? "SENTINEL-1" : "SENTINEL-2";
+        const odataUrl = `https://catalogue.dataspace.copernicus.eu/odata/v1/Products?$filter=Collection/Name eq '${collectionName}' and OData.CSC.Intersects(area=geography'SRID=4326;POLYGON((${minX} ${minY},${maxX} ${minY},${maxX} ${maxY},${minX} ${maxY},${minX} ${minY}))') and ContentDate/Start ge ${startDate}T00:00:00.000Z and ContentDate/Start le ${endDate}T23:59:59.999Z&$top=4&$orderby=ContentDate/Start desc`;
 
-        // Fallback: If strict date range returns 0, fetch latest acquisitions over the polygon
-        if (!data.features || data.features.length === 0) {
-          const fallbackUrl = `https://catalogue.dataspace.copernicus.eu/resto/api/collections/${collection}/search.json?box=${minX},${minY},${maxX},${maxY}&maxRecords=4&sortParam=startDate&sortOrder=descending`;
-          response = await fetch(fallbackUrl);
-          data = await response.json();
+        const resp = await fetch(odataUrl, { method: 'GET', mode: 'cors' });
+        if (resp.ok) {
+          const odata = await resp.json();
+          if (odata.value && odata.value.length > 0) {
+            features = odata.value.map(item => ({
+              id: item.Id,
+              title: item.Name,
+              date: item.ContentDate?.Start?.split("T")[0] || "Recent",
+              cloud: item.Attributes?.find(a => a.Name === 'cloudCover')?.Value,
+              downloadUrl: `https://zipper.dataspace.copernicus.eu/odata/v1/Products(${item.Id})/$value`,
+              browserUrl: `https://browser.dataspace.copernicus.eu/?zoom=11&lat=${b.getCenter().lat}&lng=${b.getCenter().lng}&fromTime=${startDate}T00:00:00.000Z&toTime=${endDate}T23:59:59.999Z`
+            }));
+          }
         }
-
-        if (!data.features || data.features.length === 0) {
-          resContainer.innerHTML = '<p style="color:#94a3b8; font-size:0.72rem;">No scenes found for this bounding box.</p>';
-          return;
-        }
-
-        resContainer.innerHTML = '';
-        data.features.forEach((feat) => {
-          const props = feat.properties;
-          const productId = feat.id;
-          const sceneDate = props.startDate ? props.startDate.split("T")[0] : "Recent";
-          const cloud = props.cloudCover !== undefined ? props.cloudCover.toFixed(1) + "%" : "SAR Radar";
-          
-          // Direct download link via Copernicus Zipper service
-          const downloadUrl = `https://zipper.dataspace.copernicus.eu/odata/v1/Products(${productId})/$value`;
-          const browserUrl = `https://browser.dataspace.copernicus.eu/?zoom=11&lat=${b.getCenter().lat}&lng=${b.getCenter().lng}&fromTime=${sceneDate}T00:00:00.000Z&toTime=${sceneDate}T23:59:59.999Z`;
-
-          const poly = L.geoJSON(feat.geometry, {
-            style: { color: "#00f0ff", weight: 1.5, fillOpacity: 0.1 }
-          }).addTo(footprintsLayer);
-          poly.bindPopup(`<b>${props.title || productId}</b><br>Captured: ${sceneDate}`);
-
-          resContainer.innerHTML += `
-            <div class="scene-card">
-              <strong style="color:#38bdf8;">${(props.title || productId).substring(0, 24)}...</strong><br>
-              Date: <b>${sceneDate}</b> | Cloud: <b>${cloud}</b><br>
-              <div style="display:flex; gap:8px; margin-top:4px;">
-                <a href="${downloadUrl}" target="_blank" style="color: #38bdf8; text-decoration: none; font-weight: 700;">
-                  <i class="fa-solid fa-download"></i> Direct ZIP
-                </a>
-                <a href="${browserUrl}" target="_blank" style="color: #94a3b8; text-decoration: none;">
-                  <i class="fa-solid fa-arrow-up-right-from-square"></i> Inspect
-                </a>
-              </div>
-            </div>
-          `;
-        });
       } catch (err) {
-        resContainer.innerHTML = `<p style="color:#ef4444; font-size:0.72rem;">Catalog service note: ${err.message}</p>`;
+        console.warn("CDSE OData failed, attempting STAC fallback...", err);
       }
+
+      // Strategy 2: Earth-Search STAC (AWS open catalog - 100% CORS-unrestricted globally)
+      if (features.length === 0) {
+        try {
+          const stacPayload = {
+            collections: [isSAR ? "sentinel-1-grd" : "sentinel-2-l2a"],
+            bbox: bbox,
+            datetime: `${startDate}T00:00:00Z/${endDate}T23:59:59Z`,
+            limit: 4
+          };
+
+          const stacResp = await fetch("https://earth-search.aws.element84.com/v1/search", {
+            method: "POST",
+            headers: { "Content-Type": "application/json" },
+            body: JSON.stringify(stacPayload)
+          });
+
+          if (stacResp.ok) {
+            const stacData = await stacResp.json();
+            if (stacData.features && stacData.features.length > 0) {
+              features = stacData.features.map(f => {
+                // Plot footprint polygon
+                if (f.geometry) {
+                  L.geoJSON(f.geometry, {
+                    style: { color: "#00f0ff", weight: 1.5, fillOpacity: 0.1 }
+                  }).addTo(footprintsLayer);
+                }
+
+                const props = f.properties;
+                const dateStr = props.datetime ? props.datetime.split("T")[0] : "Recent";
+                const downloadHref = f.assets?.visual?.href || f.assets?.thumbnail?.href || Object.values(f.assets || {})[0]?.href || "#";
+
+                return {
+                  id: f.id,
+                  title: f.id,
+                  date: dateStr,
+                  cloud: props["eo:cloud_cover"],
+                  downloadUrl: downloadHref,
+                  browserUrl: `https://browser.dataspace.copernicus.eu/?zoom=11&lat=${b.getCenter().lat}&lng=${b.getCenter().lng}&fromTime=${dateStr}T00:00:00.000Z&toTime=${dateStr}T23:59:59.999Z`
+                };
+              });
+            }
+          }
+        } catch (stacErr) {
+          console.warn("STAC fallback error:", stacErr);
+        }
+      }
+
+      // Render cards or friendly status
+      if (features.length === 0) {
+        resContainer.innerHTML = `
+          <div style="font-size:0.72rem; color:#94a3b8; padding:4px;">
+            No scenes detected in this exact date span.<br>
+            <a href="https://browser.dataspace.copernicus.eu/?zoom=11&lat=${b.getCenter().lat.toFixed(2)}&lng=${b.getCenter().lng.toFixed(2)}" target="_blank" style="color:#38bdf8; text-decoration:none; font-weight:600;">
+              <i class="fa-solid fa-arrow-up-right-from-square"></i> Open in CDSE Browser Directly
+            </a>
+          </div>`;
+        return;
+      }
+
+      resContainer.innerHTML = '';
+      features.forEach(item => {
+        const cloudLabel = item.cloud !== undefined ? `${parseFloat(item.cloud).toFixed(1)}%` : "SAR Mode";
+        resContainer.innerHTML += `
+          <div class="scene-card">
+            <strong style="color:#38bdf8;">${item.title.substring(0, 26)}...</strong><br>
+            Date: <b>${item.date}</b> | Cloud: <b>${cloudLabel}</b><br>
+            <div style="display:flex; gap:8px; margin-top:4px;">
+              <a href="${item.downloadUrl}" target="_blank" style="color: #38bdf8; text-decoration: none; font-weight: 700;">
+                <i class="fa-solid fa-download"></i> Download Asset
+              </a>
+              <a href="${item.browserUrl}" target="_blank" style="color: #94a3b8; text-decoration: none;">
+                <i class="fa-solid fa-arrow-up-right-from-square"></i> Inspect
+              </a>
+            </div>
+          </div>
+        `;
+      });
     }
 
     // 9. Multi-Format Exports
