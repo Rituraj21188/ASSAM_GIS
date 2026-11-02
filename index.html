@@ -3,7 +3,7 @@
 <head>
   <meta charset="UTF-8" />
   <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no, viewport-fit=cover" />
-  <title>Assam Space-GIS Engine | Earth Observation Terminal</title>
+  <title>Assam Earth Observation & Deep-Tech Terminal</title>
 
   <!-- Leaflet Core & Plugins -->
   <link rel="stylesheet" href="https://unpkg.com/leaflet@1.9.4/dist/leaflet.css" />
@@ -223,14 +223,14 @@
       <div class="card">
         <h3>4. Export & Download (Current AOI)</h3>
         <p style="font-size:0.72rem; color:#94a3b8;">
-          Scene archives auto-fetch for the active target area.
+          Calibrated GeoTIFF downloads directly for active area; full archive redirects to Copernicus.
         </p>
         
         <div class="export-grid">
           <button class="btn-export" onclick="exportAOI('geojson')"><i class="fa-solid fa-file-code"></i> GeoJSON</button>
           <button class="btn-export" onclick="exportAOI('kml')"><i class="fa-solid fa-earth-americas"></i> KML</button>
+          <button class="btn-export" onclick="exportAOIGeoTIFF()"><i class="fa-solid fa-file-image"></i> AOI GeoTIFF</button>
           <button class="btn-export" onclick="exportWMSBounds()"><i class="fa-solid fa-image"></i> BBox Image</button>
-          <button class="btn-export" onclick="triggerAutoFetch()"><i class="fa-solid fa-arrows-rotate"></i> Refresh STAC</button>
         </div>
 
         <div class="scene-result-box" id="scene-results">
@@ -427,8 +427,6 @@
 
       const wmsUrl = `https://sh.dataspace.copernicus.eu/ogc/wms/${COPERNICUS_INSTANCE_ID}`;
 
-      // CRITICAL FIX: tileSize: 512 + zoomOffset: -1 cuts tile requests by 75%
-      // This eliminates the 429 rate limit glitching / patch holes completely!
       copernicusWmsLayer = L.tileLayer.wms(wmsUrl, {
         layers: layerName,
         format: 'image/png',
@@ -444,7 +442,6 @@
         attribution: '&copy; Copernicus Data Space'
       }).addTo(map);
 
-      // Auto-retry dropped tiles if temporary network latency occurs
       copernicusWmsLayer.on('tileerror', function(error, tile) {
         setTimeout(() => {
           if (tile && tile.src) {
@@ -473,18 +470,18 @@
       }
     });
 
-    // 8. Robust Scene Fetching (Resolves "No scenes in range")
+    // 8. Robust Scene Fetching (Resolves CORS & Token Not Found Issues)
     function triggerAutoFetch() {
       searchLiveScenes();
     }
 
-async function searchLiveScenes() {
+    async function searchLiveScenes() {
       const b = selectedDistrictFeature ? L.geoJSON(selectedDistrictFeature).getBounds() : map.getBounds();
       const resContainer = document.getElementById('scene-results');
       const activeLayer = document.getElementById('copernicus-layer-select').value;
       const isSAR = activeLayer === 'SENTINEL-1-FLOOD';
 
-      resContainer.innerHTML = '<p style="color:#38bdf8; font-size:0.72rem;"><i class="fa-solid fa-spinner fa-spin"></i> Querying satellite catalog...</p>';
+      resContainer.innerHTML = '<p style="color:#38bdf8; font-size:0.72rem;"><i class="fa-solid fa-spinner fa-spin"></i> Fetching active scenes...</p>';
       footprintsLayer.clearLayers();
 
       const minX = Math.max(-180, b.getWest()).toFixed(4);
@@ -499,7 +496,7 @@ async function searchLiveScenes() {
 
       let features = [];
 
-      // Strategy 1: CORS-compliant Copernicus OData API (GET query, no preflight CORS block)
+      // Strategy 1: CORS-compliant Copernicus OData API
       try {
         const collectionName = isSAR ? "SENTINEL-1" : "SENTINEL-2";
         const odataUrl = `https://catalogue.dataspace.copernicus.eu/odata/v1/Products?$filter=Collection/Name eq '${collectionName}' and OData.CSC.Intersects(area=geography'SRID=4326;POLYGON((${minX} ${minY},${maxX} ${minY},${maxX} ${maxY},${minX} ${maxY},${minX} ${minY}))') and ContentDate/Start ge ${startDate}T00:00:00.000Z and ContentDate/Start le ${endDate}T23:59:59.999Z&$top=4&$orderby=ContentDate/Start desc`;
@@ -513,8 +510,7 @@ async function searchLiveScenes() {
               title: item.Name,
               date: item.ContentDate?.Start?.split("T")[0] || "Recent",
               cloud: item.Attributes?.find(a => a.Name === 'cloudCover')?.Value,
-              downloadUrl: `https://zipper.dataspace.copernicus.eu/odata/v1/Products(${item.Id})/$value`,
-              browserUrl: `https://browser.dataspace.copernicus.eu/?zoom=11&lat=${b.getCenter().lat}&lng=${b.getCenter().lng}&fromTime=${startDate}T00:00:00.000Z&toTime=${endDate}T23:59:59.999Z`
+              browserUrl: `https://browser.dataspace.copernicus.eu/?zoom=11&lat=${b.getCenter().lat}&lng=${b.getCenter().lng}&themeId=DEFAULT-THEME&datasetId=${isSAR ? 'S1_AWS_IW_VVVH' : 'S2_L2A_CDAS'}&fromTime=${startDate}T00%3A00%3A00.000Z&toTime=${endDate}T23%3A59%3A59.999Z`
             }));
           }
         }
@@ -522,7 +518,7 @@ async function searchLiveScenes() {
         console.warn("CDSE OData failed, attempting STAC fallback...", err);
       }
 
-      // Strategy 2: Earth-Search STAC (AWS open catalog - 100% CORS-unrestricted globally)
+      // Strategy 2: Earth-Search STAC Fallback (100% CORS-unrestricted)
       if (features.length === 0) {
         try {
           const stacPayload = {
@@ -542,7 +538,6 @@ async function searchLiveScenes() {
             const stacData = await stacResp.json();
             if (stacData.features && stacData.features.length > 0) {
               features = stacData.features.map(f => {
-                // Plot footprint polygon
                 if (f.geometry) {
                   L.geoJSON(f.geometry, {
                     style: { color: "#00f0ff", weight: 1.5, fillOpacity: 0.1 }
@@ -551,14 +546,12 @@ async function searchLiveScenes() {
 
                 const props = f.properties;
                 const dateStr = props.datetime ? props.datetime.split("T")[0] : "Recent";
-                const downloadHref = f.assets?.visual?.href || f.assets?.thumbnail?.href || Object.values(f.assets || {})[0]?.href || "#";
 
                 return {
                   id: f.id,
                   title: f.id,
                   date: dateStr,
                   cloud: props["eo:cloud_cover"],
-                  downloadUrl: downloadHref,
                   browserUrl: `https://browser.dataspace.copernicus.eu/?zoom=11&lat=${b.getCenter().lat}&lng=${b.getCenter().lng}&fromTime=${dateStr}T00:00:00.000Z&toTime=${dateStr}T23:59:59.999Z`
                 };
               });
@@ -569,31 +562,25 @@ async function searchLiveScenes() {
         }
       }
 
-      // Render cards or friendly status
       if (features.length === 0) {
-        resContainer.innerHTML = `
-          <div style="font-size:0.72rem; color:#94a3b8; padding:4px;">
-            No scenes detected in this exact date span.<br>
-            <a href="https://browser.dataspace.copernicus.eu/?zoom=11&lat=${b.getCenter().lat.toFixed(2)}&lng=${b.getCenter().lng.toFixed(2)}" target="_blank" style="color:#38bdf8; text-decoration:none; font-weight:600;">
-              <i class="fa-solid fa-arrow-up-right-from-square"></i> Open in CDSE Browser Directly
-            </a>
-          </div>`;
+        resContainer.innerHTML = '<p style="color:#94a3b8; font-size:0.72rem;">No scenes detected in this exact date span. Try widening calendar range.</p>';
         return;
       }
 
       resContainer.innerHTML = '';
-      features.forEach(item => {
+      features.forEach((item) => {
         const cloudLabel = item.cloud !== undefined ? `${parseFloat(item.cloud).toFixed(1)}%` : "SAR Mode";
+
         resContainer.innerHTML += `
           <div class="scene-card">
-            <strong style="color:#38bdf8;">${item.title.substring(0, 26)}...</strong><br>
+            <strong style="color:#38bdf8;">${item.title.substring(0, 24)}...</strong><br>
             Date: <b>${item.date}</b> | Cloud: <b>${cloudLabel}</b><br>
-            <div style="display:flex; gap:8px; margin-top:4px;">
-              <a href="${item.downloadUrl}" target="_blank" style="color: #38bdf8; text-decoration: none; font-weight: 700;">
-                <i class="fa-solid fa-download"></i> Download Asset
-              </a>
-              <a href="${item.browserUrl}" target="_blank" style="color: #94a3b8; text-decoration: none;">
-                <i class="fa-solid fa-arrow-up-right-from-square"></i> Inspect
+            <div style="display:flex; gap:8px; margin-top:5px;">
+              <button onclick="exportAOIGeoTIFF()" style="background:#0284c7; color:#fff; border:none; border-radius:4px; padding:3px 8px; font-size:0.7rem; font-weight:700; cursor:pointer;">
+                <i class="fa-solid fa-file-arrow-down"></i> AOI GeoTIFF
+              </button>
+              <a href="${item.browserUrl}" target="_blank" style="color:#38bdf8; text-decoration:none; font-weight:600; display:flex; align-items:center; gap:4px; font-size:0.7rem;">
+                <i class="fa-solid fa-box-archive"></i> Full RAW SAFE
               </a>
             </div>
           </div>
@@ -601,7 +588,29 @@ async function searchLiveScenes() {
       });
     }
 
-    // 9. Multi-Format Exports
+    // 9. Direct GeoTIFF Download for Active AOI (Bypasses token restrictions)
+    function exportAOIGeoTIFF() {
+      const b = selectedDistrictFeature ? L.geoJSON(selectedDistrictFeature).getBounds() : map.getBounds();
+      const layer = document.getElementById('copernicus-layer-select').value;
+      if (layer === "OFF") return alert("Please select an active satellite preset first!");
+
+      const minX = b.getWest().toFixed(4);
+      const minY = b.getSouth().toFixed(4);
+      const maxX = b.getEast().toFixed(4);
+      const maxY = b.getNorth().toFixed(4);
+      const bboxStr = `${minX},${minY},${maxX},${maxY}`;
+
+      const tiffUrl = `https://sh.dataspace.copernicus.eu/ogc/wms/${COPERNICUS_INSTANCE_ID}?SERVICE=WMS&REQUEST=GetMap&LAYERS=${layer}&BBOX=${bboxStr}&WIDTH=2048&HEIGHT=2048&FORMAT=image/tiff&CRS=EPSG:4326&TIME=${selectedTimeRange}&SHOWLOGO=false`;
+      
+      const a = document.createElement('a');
+      a.href = tiffUrl;
+      a.download = `Assam_${layer}_${Date.now()}.tif`;
+      document.body.appendChild(a);
+      a.click();
+      document.body.removeChild(a);
+    }
+
+    // 10. Multi-Format Vector & Image Exports
     function exportAOI(format) {
       if (!selectedDistrictFeature) {
         alert("Please click a district or draw a polygon on the map first.");
@@ -650,7 +659,7 @@ async function searchLiveScenes() {
       window.open(imgUrl, '_blank');
     }
 
-    // 10. District Analytics & Chart
+    // 11. District Analytics & Chart
     const classes = [
       { key: 'pct_forest', label: 'Dense Forest Canopy', color: '#1b7837' },
       { key: 'pct_shrub_tea', label: 'Tea & Shrubland', color: '#78c679' },
@@ -747,7 +756,7 @@ async function searchLiveScenes() {
             fillColor: isSelected ? '#00f0ff' : '#000000',
             fillOpacity: isSelected ? 0.05 : 0.35,
             weight: isSelected ? 3.5 : 2.0,
-            color: isSelected ? '#f59e0b' : '#00f0ff', // Bold neon cyan & selected electric gold
+            color: isSelected ? '#f59e0b' : '#00f0ff',
             opacity: currentVectorOpacity
           };
         });
@@ -762,7 +771,7 @@ async function searchLiveScenes() {
       triggerAutoFetch();
     }
 
-    // 11. Load GeoJSON with Vibrant Neon Boundaries & Centroid Labels
+    // 12. Load GeoJSON with Vibrant Neon Boundaries & Centroid Labels
     function initGeoJSON(data) {
       data.features = data.features.filter(f => 
         f.geometry && (f.geometry.type === 'Polygon' || f.geometry.type === 'MultiPolygon')
@@ -780,7 +789,6 @@ async function searchLiveScenes() {
         }
       });
 
-      // Highlighted boundary styling
       districtLayer = L.geoJSON(data, {
         pane: 'districtPane',
         style: {
@@ -788,14 +796,13 @@ async function searchLiveScenes() {
           fillOpacity: 0.1,
           weight: 2.2,
           opacity: currentVectorOpacity,
-          color: '#00f0ff', // Prominent neon cyan outlines across base map
+          color: '#00f0ff',
           dashArray: 'none'
         },
         onEachFeature: (feature, layer) => {
           const name = feature.properties?.name || feature.properties?.DISTRICT;
           districtLookup[name] = { layer, feature };
           
-          // High-visibility centroid typography badge
           const center = layer.getBounds().getCenter();
           const labelMarker = L.marker(center, {
             pane: 'labelPane',
